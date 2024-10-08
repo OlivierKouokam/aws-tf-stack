@@ -9,6 +9,17 @@
 #   }
 # }
 
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "5.60.0"
+    }
+  }
+
+  required_version = "1.9.4"
+}
+
 provider "aws" {
   region = "us-east-1"
   # access_key = "YOUR-ACCESS-KEY"
@@ -34,7 +45,8 @@ module "kubernetes-ec2" {
   security_groups = [module.sg.aws_sg_name]
   private_key     = module.keypair.private_key
   # private_key     = ""
-  user_data_path  = "./userdata_kubernetes.sh"
+  # user_data_path  = "./userdata_kubernetes.sh"
+  user_data_path  = "./userdata_minikube.sh"
 }
 
 module "worker1-ec2" {
