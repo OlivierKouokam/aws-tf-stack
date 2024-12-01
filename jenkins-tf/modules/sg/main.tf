@@ -29,7 +29,7 @@ resource "aws_security_group_rule" "allow_all_egress" {
 resource "aws_security_group" "allow_http_https" {
   name        = var.sg_name
   description = "Allow all TCP traffic"
-  /*
+  
   ingress {
     description = "TLS from VPC"
     from_port   = 443
@@ -69,5 +69,5 @@ resource "aws_security_group" "allow_http_https" {
     protocol = "ALL"
     cidr_blocks = [ "0.0.0.0/0" ]
   }
-  */
+  
 }

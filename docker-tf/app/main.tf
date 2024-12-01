@@ -38,7 +38,7 @@ module "docker-ec2" {
   key_name        = module.keypair.key_name
   security_groups = [module.sg.aws_sg_name]
   private_key     = module.keypair.private_key
-  user_data_path  = "./userdata_docker.sh"
+  user_data_path  = "../../scripts/userdata_docker.sh"
 }
 
 
@@ -49,12 +49,12 @@ module "keypair" {
 
 
 module "sg" {
-  source  = "../modules/sg" 
-  sg_name = "docker-sg"  
+  source  = "../modules/sg"
+  sg_name = "docker-sg"
 }
 
 module "vpc" {
-  source  = "../modules/vpc"
+  source   = "../modules/vpc"
   vpc_name = "docker-vpc"
 }
 

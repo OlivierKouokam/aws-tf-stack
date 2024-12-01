@@ -5,6 +5,8 @@
 #     # secret_key = "YOUR-SECRET-KEY"
 #     shared_credentials_files = ["../.secrets/credentials"]
 #     bucket = "backend-eazyastuces"
+#     #dynamodb_table = "value"
+#     #encrypt = true
 #     key = "eazy-astuce.tfstate"
 #   }
 # }
@@ -18,6 +20,7 @@ terraform {
   }
 
   required_version = "1.9.4"
+
 }
 
 provider "aws" {

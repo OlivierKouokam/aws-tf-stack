@@ -49,6 +49,7 @@ module "kubernetes-ec2" {
   user_data_path  = "./userdata_minikube.sh"
 }
 
+ 
 module "worker1-ec2" {
   depends_on    = [module.sg, module.keypair]
   source        = "../modules/ec2"
@@ -63,7 +64,7 @@ module "worker1-ec2" {
   # private_key     = ""
   user_data_path  = "./userdata_worker.sh"
 }
-
+/*
 module "worker2-ec2" {
   depends_on    = [module.sg, module.keypair]
   source        = "../modules/ec2"
@@ -78,7 +79,7 @@ module "worker2-ec2" {
   # private_key     = ""
   user_data_path  = "./userdata_worker.sh"
 }
-
+ */
 module "keypair" {
   source   = "../modules/keypair"
   key_name = "devops-kubernetes"

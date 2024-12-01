@@ -1,0 +1,47 @@
+version: '3.7'
+
+services:
+  gitlab:
+    image: 'gitlab/gitlab-ce:latest'
+    restart: always
+    hostname: 'gitlab.example.com'
+    environment:
+      # GITLAB_ROOT_EMAIL: 'gitlab_root@example.com'
+      # GITLAB_ROOT_PASSWORD: 'root@1234'
+      GITLAB_OMNIBUS_CONFIG: |
+        gitlab_rails['initial_root_password'] = 'root@1234';
+        external_url 'http://gitlab.example.com';
+        gitlab_rails['db_adapter'] = 'postgresql';
+        gitlab_rails['db_encoding'] = 'unicode';
+        gitlab_rails['db_database'] = 'gitlabhq_production';
+        gitlab_rails['db_pool'] = 10;
+        gitlab_rails['db_username'] = 'gitlab';
+        gitlab_rails['db_password'] = 'yourpassword';
+        gitlab_rails['db_host'] = 'postgres';
+        gitlab_rails['db_port'] = 5432;
+    ports:
+      - '80:80'
+      - '443:443'
+      - '22:22'
+    depends_on:
+      - postgres
+    volumes:
+      - 'gitlab-config:/etc/gitlab'
+      - 'gitlab-logs:/var/log/gitlab'
+      - 'gitlab-data:/var/opt/gitlab'
+
+  postgres:
+    image: 'postgres:16'
+    restart: always
+    environment:
+      POSTGRES_DB: 'gitlabhq_production'
+      POSTGRES_USER: 'gitlab'
+      POSTGRES_PASSWORD: 'yourpassword'
+    volumes:
+      - 'postgres-data:/var/lib/postgresql/data'
+
+volumes:
+  gitlab-config:
+  gitlab-logs:
+  gitlab-data:
+  postgres-data:
