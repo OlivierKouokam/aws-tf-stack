@@ -35,12 +35,12 @@ provider "aws" {
   region = "us-east-1"
   # access_key = "YOUR-ACCESS-KEY"
   # secret_key = "YOUR-SECRET-KEY"
-  shared_credentials_files = ["../../.secrets/credentials"]
+  shared_credentials_files = ["../.secrets/credentials"]
   profile                  = "default"
 }
 
 variable "static_key_name" {
-  type = string
+  type    = string
   default = "devops-olivier"
 }
 
@@ -51,12 +51,12 @@ module "gitlab-ec2" {
   aws_common_tag = {
     Name = "gitlab-ec2"
   }
-  key_name        = module.keypair.key_name
+  key_name = module.keypair.key_name
   # key_name        = var.static_key_name
   security_groups = [module.sg.aws_sg_name]
   private_key     = module.keypair.private_key
   # private_key     = ""
-  user_data_path  = "./userdata_gitlab.sh"
+  user_data_path = "../scripts/userdata_gitlab.sh"
 }
 
 module "staging-ec2" {
@@ -66,12 +66,12 @@ module "staging-ec2" {
   aws_common_tag = {
     Name = "staging-ec2"
   }
-  key_name        = module.keypair.key_name
+  key_name = module.keypair.key_name
   # key_name        = var.static_key_name
   security_groups = [module.sg.aws_sg_name]
   private_key     = module.keypair.private_key
   # private_key     = ""
-  user_data_path  = "./userdata_docker.sh"
+  user_data_path = "../scripts/userdata_docker.sh"
 }
 
 module "production-ec2" {
@@ -81,12 +81,12 @@ module "production-ec2" {
   aws_common_tag = {
     Name = "production-ec2"
   }
-  key_name        = module.keypair.key_name
+  key_name = module.keypair.key_name
   # key_name        = var.static_key_name
   security_groups = [module.sg.aws_sg_name]
   private_key     = module.keypair.private_key
   # private_key     = ""
-  user_data_path  = "./userdata_docker.sh"
+  user_data_path = "../scripts/userdata_docker.sh"
 }
 
 module "keypair" {
@@ -96,12 +96,12 @@ module "keypair" {
 
 
 module "sg" {
-  source  = "../modules/sg" 
-  sg_name = "gitlab-sg"  
+  source  = "../modules/sg"
+  sg_name = "gitlab-sg"
 }
 
 module "vpc" {
-  source  = "../modules/vpc"
+  source   = "../modules/vpc"
   vpc_name = "gitlab-vpc"
 }
 

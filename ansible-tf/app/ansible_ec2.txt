@@ -1,1 +1,0 @@
-PUBLIC_IP: 34.230.18.148 - PUBLIC_DNS: ec2-34-230-18-148.compute-1.amazonaws.com  ;

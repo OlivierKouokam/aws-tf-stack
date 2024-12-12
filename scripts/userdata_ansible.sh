@@ -1,27 +1,14 @@
 #!/bin/bash
+# Mettre à jour les dépôts et les paquets du système
+sudo apt update && sudo apt upgrade -y
+
+# Ajouter le PPA officiel d'Ansible
+sudo apt-add-repository ppa:ansible/ansible
+
+# Mettre à jour les dépôts après avoir ajouté le PPA
 sudo apt update
-# sudo apt install python3 ansible -y
-# sudo apt install git sshpass -y
 
-# git clone https://github.com/diranetafen/cursus-devops.git
-# cd cursus-devops/ansible
-# ansible-galaxy install -r roles/requirements.yml
-# ansible-playbook install_docker.yml
-# sudo usermod -aG docker ubuntu
-# curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-# chmod +x /usr/local/bin/docker-compose
+# Installer une version spécifique d'Ansible via apt (par exemple, version 2.9.0)
+sudo apt install ansible=2.10.7+merged+base+2.10.8+dfsg-1 -y
+sudo apt install git sshpass -y
 
-if [[ !(-z "$ENABLE_ZSH")  &&  ($ENABLE_ZSH == "true") ]]
-then
-    echo "We are going to install zsh"
-    sudo yum -y install zsh git
-    echo "ubuntu" | chsh -s /bin/zsh ubuntu
-    su - ubuntu  -c  'echo "Y" | sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"'
-    su - ubuntu  -c "git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
-    sed -i 's/^plugins=/#&/' /home/ubuntu/.zshrc
-    echo "plugins=(git docker docker-compose helm kubectl kubectx minikube colored-man-pages aliases copyfile  copypath dotenv zsh-syntax-highlighting jsontools)" >> /home/ubuntu/.zshrc
-    sed -i "s/^ZSH_THEME=.*/ZSH_THEME='agnoster'/g"  /home/ubuntu/.zshrc
-else
-    echo "The zsh is not installed on this server"
-fi
-echo "For this Stack, you will use $(ip -f inet addr show enp0s8 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p') IP Address"

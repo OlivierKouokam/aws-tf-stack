@@ -46,7 +46,7 @@ module "kubernetes-ec2" {
   private_key     = module.keypair.private_key
   # private_key     = ""
   # user_data_path  = "./userdata_kubernetes.sh"
-  user_data_path  = "./userdata_minikube.sh"
+  user_data_path  = "../../scripts/userdata_minikube.sh"
 }
 
  
@@ -62,7 +62,7 @@ module "worker1-ec2" {
   security_groups = [module.sg.aws_sg_name]
   private_key     = module.keypair.private_key
   # private_key     = ""
-  user_data_path  = "./userdata_worker.sh"
+  user_data_path  = "../../scripts/userdata_worker.sh"
 }
 /*
 module "worker2-ec2" {

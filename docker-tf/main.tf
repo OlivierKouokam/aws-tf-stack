@@ -24,7 +24,7 @@ provider "aws" {
   region = "us-east-1"
   # access_key = "YOUR-ACCESS-KEY"
   # secret_key = "YOUR-SECRET-KEY"
-  shared_credentials_files = ["../../.secrets/credentials"]
+  shared_credentials_files = ["../.secrets/credentials"]
   profile                  = "default"
 }
 
@@ -38,7 +38,20 @@ module "docker-ec2" {
   key_name        = module.keypair.key_name
   security_groups = [module.sg.aws_sg_name]
   private_key     = module.keypair.private_key
-  user_data_path  = "../../scripts/userdata_docker.sh"
+  user_data_path  = "../scripts/userdata_docker.sh"
+}
+
+module "jenkins-docker-ec2" {
+  depends_on    = [module.sg, module.keypair]
+  source        = "../modules/ec2"
+  instance_type = "t2.medium"
+  aws_common_tag = {
+    Name = "jenkins-docker-ec2"
+  }
+  key_name        = module.keypair.key_name
+  security_groups = [module.sg.aws_sg_name]
+  private_key     = module.keypair.private_key
+  user_data_path  = "../scripts/userdata_jenkins.sh"
 }
 
 
