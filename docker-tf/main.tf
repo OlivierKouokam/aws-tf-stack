@@ -56,8 +56,9 @@ module "jenkins-docker-ec2" {
 
 
 module "keypair" {
-  source   = "../modules/keypair"
-  key_name = "devops-docker"
+  source           = "../modules/keypair"
+  key_name         = "devops-docker"
+  private_key_path = "../.secrets/${module.keypair.key_name}.pem"
 }
 
 

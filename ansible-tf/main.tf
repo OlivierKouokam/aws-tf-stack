@@ -82,6 +82,7 @@ module "production-ec2" {
 module "keypair" {
   source   = "../modules/keypair"
   key_name = "devops-ansible"
+  private_key_path = "../.secrets/${key_name}.pem"
 }
 
 
