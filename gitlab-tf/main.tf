@@ -36,7 +36,7 @@ provider "aws" {
   # access_key = "YOUR-ACCESS-KEY"
   # secret_key = "YOUR-SECRET-KEY"
   shared_credentials_files = ["../.secrets/credentials"]
-  profile                  = "default"
+  profile                  = "stack"
 }
 
 variable "static_key_name" {
@@ -45,7 +45,7 @@ variable "static_key_name" {
 }
 
 module "gitlab-ec2" {
-  # depends_on    = [module.sg, module.keypair]
+  depends_on    = [module.sg, module.keypair]
   source        = "../modules/ec2"
   instance_type = "t2.medium"
   aws_common_tag = {
@@ -92,7 +92,7 @@ module "production-ec2" {
 module "keypair" {
   source   = "../modules/keypair"
   key_name = "devops-gitlab"
-  private_key_path = "../.secrets/${key_name}.pem"
+  private_key_path = "../.secrets/${module.keypair.key_name}.pem"
 }
 
 

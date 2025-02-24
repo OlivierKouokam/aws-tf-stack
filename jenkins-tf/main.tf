@@ -28,7 +28,7 @@ provider "aws" {
   # access_key = "YOUR-ACCESS-KEY"
   # secret_key = "YOUR-SECRET-KEY"
   shared_credentials_files = ["../.secrets/credentials"]
-  profile                  = "default"
+  profile                  = "stack"
 }
 
 variable "static_key_name" {
@@ -39,7 +39,7 @@ variable "static_key_name" {
 module "jenkins-ec2" {
   depends_on    = [module.sg, module.keypair]
   source        = "../modules/ec2"
-  instance_type = "t2.medium"
+  instance_type = "t3.medium"
   aws_common_tag = {
     Name = "jenkins-ec2"
   }
@@ -54,7 +54,7 @@ module "jenkins-ec2" {
 module "staging-ec2" {
   depends_on    = [module.sg, module.keypair]
   source        = "../modules/ec2"
-  instance_type = "t2.medium"
+  instance_type = "t3.medium"
   aws_common_tag = {
     Name = "staging-ec2"
   }
@@ -69,7 +69,7 @@ module "staging-ec2" {
 module "production-ec2" {
   depends_on    = [module.sg, module.keypair]
   source        = "../modules/ec2"
-  instance_type = "t2.medium"
+  instance_type = "t3.medium"
   aws_common_tag = {
     Name = "production-ec2"
   }
@@ -83,9 +83,9 @@ module "production-ec2" {
 
 
 module "keypair" {
-  source   = "../modules/keypair"
-  key_name = "devops-jenkins"
-  private_key_path = "../.secrets/${key_name}.pem"
+  source           = "../modules/keypair"
+  key_name         = "devops-jenkins"
+  private_key_path = "../.secrets/${module.keypair.key_name}.pem"
 }
 
 
@@ -104,6 +104,12 @@ module "vpc" {
 resource "null_resource" "output_datas" {
   depends_on = [module.jenkins-ec2, module.production-ec2, module.staging-ec2]
   provisioner "local-exec" {
-    command = "echo jenkins_ec2 - PUBLIC_IP: ${module.jenkins-ec2.public_ip} - PUBLIC_DNS: ${module.jenkins-ec2.public_dns}\n staging_ec2 - PUBLIC_IP: ${module.staging-ec2.public_ip} - PUBLIC_DNS: ${module.staging-ec2.public_dns}\n production_ec2 - PUBLIC_IP: ${module.production-ec2.public_ip} - PUBLIC_DNS: ${module.production-ec2.public_dns} > jenkins_ec2.txt"
+    command = "echo jenkins_ec2 - PUBLIC_IP: ${module.jenkins-ec2.public_ip} - PUBLIC_DNS: ${module.jenkins-ec2.public_dns} > jenkins_ec2.txt"
+  }
+  provisioner "local-exec" {
+    command = "echo staging_ec2 - PUBLIC_IP: ${module.staging-ec2.public_ip} - PUBLIC_DNS: ${module.staging-ec2.public_dns} >> jenkins_ec2.txt"
+  }
+  provisioner "local-exec" {
+    command = "echo production_ec2 - PUBLIC_IP: ${module.production-ec2.public_ip} - PUBLIC_DNS: ${module.production-ec2.public_dns} >> jenkins_ec2.txt"
   }
 }

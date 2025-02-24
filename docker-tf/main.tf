@@ -31,7 +31,7 @@ provider "aws" {
 module "docker-ec2" {
   depends_on    = [module.sg, module.keypair]
   source        = "../modules/ec2"
-  instance_type = "t2.medium"
+  instance_type = "t3.medium"
   aws_common_tag = {
     Name = "docker-ec2"
   }
@@ -44,7 +44,7 @@ module "docker-ec2" {
 module "jenkins-docker-ec2" {
   depends_on    = [module.sg, module.keypair]
   source        = "../modules/ec2"
-  instance_type = "t2.medium"
+  instance_type = "t3.medium"
   aws_common_tag = {
     Name = "jenkins-docker-ec2"
   }
