@@ -1,5 +1,5 @@
-resource "aws_vpc" "jenkins_vpc" {
-  cidr_block       = "172.32.0.0/16"
+resource "aws_vpc" "stack_vpc" {
+  cidr_block       = var.vpc_cidr_block
   instance_tenancy = "default"
 
   tags = {

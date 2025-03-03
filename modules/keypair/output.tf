@@ -5,8 +5,8 @@ output "private_key" {
 }
 
 output "public_key" {
-  value = tls_private_key.tls_pk.public_key_openssh
-  sensitive=true
+  value     = tls_private_key.tls_pk.public_key_openssh
+  sensitive = true
 }
 
 output "key_name" {

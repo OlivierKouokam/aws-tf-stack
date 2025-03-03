@@ -27,7 +27,7 @@ sudo docker exec -it jenkins_jenkins_1 cat /var/jenkins_home/secrets/initialAdmi
 /usr/bin/docker exec -it jenkins_jenkins_1 cat /var/jenkins_home/secrets/initialAdminPassword > /tmp/initialAdminPassword_absolute.txt
 /usr/bin/docker exec $(docker ps -a | grep jenkins | awk '{print \$1}') bash -c 'cat /var/jenkins_home/secrets/initialAdminPassword' > /tmp/initialAdminPassword_awk.txt
 
-if [[ !(-z "$ENABLE_ZSH")  &&  ($ENABLE_ZSH == "true") ]]
+if [[ -n "$ENABLE_ZSH" && $ENABLE_ZSH == "true" ]]
 then
     echo "We are going to install zsh"
     sudo yum -y install zsh git

@@ -10,7 +10,7 @@ resource "aws_key_pair" "generated_key" {
 
 # Sauvegarder la clé privée localement, pour connexion SSH aux instances EC2
 resource "local_file" "private_key" {
-  filename = var.private_key_path
-  content  = tls_private_key.tls_pk.private_key_pem
+  filename        = var.private_key_path
+  content         = tls_private_key.tls_pk.private_key_pem
   file_permission = "0600"
 }
