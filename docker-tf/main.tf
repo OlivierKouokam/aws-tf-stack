@@ -25,9 +25,8 @@ provider "aws" {
   # access_key = "YOUR-ACCESS-KEY"
   # secret_key = "YOUR-SECRET-KEY"
   shared_credentials_files = ["../.secrets/credentials"]
-  profile                  = "default"
+  profile                  = "stack"
 }
-
 
 module "docker_vpc" {
   source         = "../modules/vpc"
@@ -79,7 +78,6 @@ module "keypair" {
   private_key_path = "../.secrets/${module.keypair.key_name}.pem"
 }
 
-
 module "docker-ec2" {
   depends_on    = [module.sg, module.keypair]
   source        = "../modules/ec2"
@@ -95,23 +93,20 @@ module "docker-ec2" {
   user_data_path  = "../scripts/userdata_docker.sh"
 }
 
-module "docker-docker-ec2" {
-  depends_on    = [module.sg, module.keypair]
-  source        = "../modules/ec2"
-  subnet_id     = module.public_subnet.subnet_id
-  instance_type = "t3.medium"
-  aws_common_tag = {
-    Name = "docker-docker-ec2"
+module "docker_eip" {
+  source = "../modules/eip"
+  eip_tags = {
+    Name = "docker_eip"
   }
-  key_name        = module.keypair.key_name
-  security_group_ids = [ module.sg.aws_sg_id ]
-  # security_groups = [module.sg.aws_sg_name]
-  private_key     = module.keypair.private_key
-  user_data_path  = "../scripts/userdata_docker.sh"
 }
 
-resource "null_resource" "output_metadatas" {
-  depends_on = [module.docker-ec2, ]
+resource "aws_eip_association" "docker_eip_assoc" {
+  instance_id = module.docker-ec2.ec2_instance_id
+  allocation_id = module.docker_eip.eip_id
+}
+
+resource "null_resource" "outputs_metadatas" {
+  depends_on = [resource.aws_eip_association.docker_eip_assoc, ]
   provisioner "local-exec" {
     command = "echo PUBLIC_IP: ${module.docker-ec2.public_ip} - PUBLIC_DNS: ${module.docker-ec2.public_dns}  > docker_ec2.txt"
   }
