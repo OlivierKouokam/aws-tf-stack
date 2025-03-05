@@ -83,7 +83,8 @@ module "keypair" {
 
 module "jenkins-ec2" {
   depends_on = [
-    module.sg, module.keypair
+    module.sg, module.keypair, 
+    resource.aws_route_table_association.public_subnet_to_jenkins_igw
   ]
   source        = "../modules/ec2"
   subnet_id     = module.public_subnet.subnet_id
@@ -101,7 +102,10 @@ module "jenkins-ec2" {
 }
 
 module "staging-ec2" {
-  depends_on    = [module.sg, module.keypair]
+  depends_on    = [
+    module.sg, module.keypair, 
+    resource.aws_route_table_association.public_subnet_to_jenkins_igw
+  ]
   source        = "../modules/ec2"
   subnet_id     = module.public_subnet.subnet_id
   instance_type = "t3.medium"
@@ -118,7 +122,10 @@ module "staging-ec2" {
 }
 
 module "production-ec2" {
-  depends_on    = [module.sg, module.keypair]
+  depends_on    = [
+    module.sg, module.keypair, 
+    resource.aws_route_table_association.public_subnet_to_jenkins_igw
+  ]
   subnet_id     = module.public_subnet.subnet_id
   source        = "../modules/ec2"
   instance_type = "t3.medium"
@@ -135,6 +142,7 @@ module "production-ec2" {
 }
 
 module "jenkins_eip" {
+  depends_on = [ resource.aws_route_table_association.public_subnet_to_jenkins_igw ]
   source = "../modules/eip"
   eip_tags = {
     Name = "jenkins_eip"
@@ -142,6 +150,7 @@ module "jenkins_eip" {
 }
 
 module "prod_eip" {
+  depends_on = [ resource.aws_route_table_association.public_subnet_to_jenkins_igw ]
   source = "../modules/eip"
   eip_tags = {
     Name = "prod_eip"
@@ -149,6 +158,7 @@ module "prod_eip" {
 }
 
 module "stag_eip" {
+  depends_on = [ resource.aws_route_table_association.public_subnet_to_jenkins_igw ]
   source = "../modules/eip"
   eip_tags = {
     Name = "stag_eip"
@@ -170,7 +180,7 @@ resource "aws_eip_association" "stag_eip_assoc" {
   allocation_id = module.stag_eip.eip_id
 }
 
-resource "null_resource" "outputs_datas" {
+resource "null_resource" "output_datas" {
   depends_on = [ 
     resource.aws_eip_association.jenkins_eip_assoc, 
     resource.aws_eip_association.prod_eip_assoc, 
@@ -187,3 +197,4 @@ resource "null_resource" "outputs_datas" {
     command = "echo production_ec2 - PUBLIC_IP: ${module.production-ec2.public_ip} - PUBLIC_DNS: ${module.production-ec2.public_dns} >> jenkins_ec2.txt"
   }
 }
+
