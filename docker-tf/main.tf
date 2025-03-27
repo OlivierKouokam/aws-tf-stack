@@ -66,8 +66,8 @@ resource "aws_route_table_association" "public_subnet_to_docker_igw" {
 }
 
 module "sg" {
-  source  = "../modules/sg"
-  sg_name = "docker-sg"
+  source         = "../modules/sg"
+  sg_name        = "docker-sg"
   vpc_id         = module.docker_vpc.stack_vpc_id
   vpc_cidr_block = ["0.0.0.0/0"]
 }
@@ -78,7 +78,7 @@ module "keypair" {
   private_key_path = "../.secrets/${module.keypair.key_name}.pem"
 }
 
-module "docker-ec2" {
+module "docker_ec2" {
   depends_on    = [module.sg, module.keypair]
   source        = "../modules/ec2"
   subnet_id     = module.public_subnet.subnet_id
@@ -86,28 +86,49 @@ module "docker-ec2" {
   aws_common_tag = {
     Name = "docker-ec2"
   }
-  key_name        = module.keypair.key_name
-  security_group_ids = [ module.sg.aws_sg_id ]
+  key_name           = module.keypair.key_name
+  security_group_ids = [module.sg.aws_sg_id]
   # security_groups = [module.sg.aws_sg_name]
-  private_key     = module.keypair.private_key
-  user_data_path  = "../scripts/userdata_docker.sh"
+  private_key    = module.keypair.private_key
+  user_data_path = "../scripts/userdata_docker.sh"
 }
 
 module "docker_eip" {
+  depends_on = [ module.docker_ec2 ]
   source = "../modules/eip"
   eip_tags = {
     Name = "docker_eip"
   }
 }
 
+module "ebs" {
+  source = "../modules/ebs"
+  AZ     = var.docker_AZ
+  size   = 20
+  ebs_tag = {
+    Name = "docker-ebs"
+  }
+}
+
 resource "aws_eip_association" "docker_eip_assoc" {
-  instance_id = module.docker-ec2.ec2_instance_id
+  instance_id   = module.docker_ec2.ec2_instance_id
   allocation_id = module.docker_eip.eip_id
 }
 
+resource "aws_volume_attachment" "ebs_att" {
+  device_name = "/dev/sdh"
+  volume_id   = module.ebs.aws_ebs_volume_id
+  instance_id = module.docker_ec2.ec2_instance_id
+}
+
 resource "null_resource" "outputs_metadatas" {
-  depends_on = [resource.aws_eip_association.docker_eip_assoc, ]
+  depends_on = [resource.aws_eip_association.docker_eip_assoc, module.docker_ec2]
+  
   provisioner "local-exec" {
-    command = "echo PUBLIC_IP: ${module.docker-ec2.public_ip} - PUBLIC_DNS: ${module.docker-ec2.public_dns}  > docker_ec2.txt"
+  #   command = <<EOT
+  #     echo docker-ec2-IP-DNS
+  #     echo PUBLIC_IP: ${module.docker_ec2.public_ip} - PUBLIC_DNS: ${module.docker_ec2.public_dns}  > docker_ec2.txt
+  #   EOT
+  command = "echo PUBLIC_IP: ${module.docker_eip.public_ip} - PUBLIC_DNS: ${module.docker_eip.public_dns}  > docker_ec2.txt"
   }
 }
