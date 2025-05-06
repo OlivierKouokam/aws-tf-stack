@@ -93,6 +93,36 @@ module "docker_ec2" {
   user_data_path = "../scripts/userdata_docker.sh"
 }
 
+module "staging_ec2" {
+  depends_on    = [module.sg, module.keypair]
+  source        = "../modules/ec2"
+  subnet_id     = module.public_subnet.subnet_id
+  instance_type = "t3.medium"
+  aws_common_tag = {
+    Name = "staging-ec2"
+  }
+  key_name           = module.keypair.key_name
+  security_group_ids = [module.sg.aws_sg_id]
+  # security_groups = [module.sg.aws_sg_name]
+  private_key    = module.keypair.private_key
+  user_data_path = "../scripts/userdata_worker.sh"
+}
+
+module "production_ec2" {
+  depends_on    = [module.sg, module.keypair]
+  source        = "../modules/ec2"
+  subnet_id     = module.public_subnet.subnet_id
+  instance_type = "t3.medium"
+  aws_common_tag = {
+    Name = "docker-ec2"
+  }
+  key_name           = module.keypair.key_name
+  security_group_ids = [module.sg.aws_sg_id]
+  # security_groups = [module.sg.aws_sg_name]
+  private_key    = module.keypair.private_key
+  user_data_path = "../scripts/userdata_worker.sh"
+}
+
 module "docker_eip" {
   depends_on = [ module.docker_ec2 ]
   source = "../modules/eip"
@@ -106,7 +136,7 @@ module "ebs" {
   AZ     = var.docker_AZ
   size   = 20
   ebs_tag = {
-    Name = "docker-ebs"
+    Name = "docker_ebs"
   }
 }
 
@@ -121,14 +151,81 @@ resource "aws_volume_attachment" "ebs_att" {
   instance_id = module.docker_ec2.ec2_instance_id
 }
 
-resource "null_resource" "outputs_metadatas" {
-  depends_on = [resource.aws_eip_association.docker_eip_assoc, module.docker_ec2]
+module "staging_eip" {
+  depends_on = [ module.staging_ec2]
+  source = "../modules/eip"
+  eip_tags = {
+    Name = "staging_eip"
+  }
+}
+
+module "staging_ebs" {
+  source = "../modules/ebs"
+  AZ     = var.docker_AZ
+  size   = 20
+  ebs_tag = {
+    Name = "staging_ebs"
+  }
+}
+
+resource "aws_eip_association" "staging_eip_assoc" {
+  instance_id   = module.staging_ec2.ec2_instance_id
+  allocation_id = module.staging_eip.eip_id
+}
+
+resource "aws_volume_attachment" "staging_ebs_att" {
+  device_name = "/dev/sdh"
+  volume_id   = module.staging_ebs.aws_ebs_volume_id
+  instance_id = module.staging_ec2.ec2_instance_id
+}
+
+module "production_eip" {
+  depends_on = [ module.staging_ec2]
+  source = "../modules/eip"
+  eip_tags = {
+    Name = "production_eip"
+  }
+}
+
+module "production_ebs" {
+  source = "../modules/ebs"
+  AZ     = var.docker_AZ
+  size   = 20
+  ebs_tag = {
+    Name = "production_ebs"
+  }
+}
+
+resource "aws_eip_association" "production_eip_assoc" {
+  instance_id   = module.production_ec2.ec2_instance_id
+  allocation_id = module.production_eip.eip_id
+}
+
+resource "aws_volume_attachment" "production_ebs_att" {
+  device_name = "/dev/sdh"
+  volume_id   = module.production_ebs.aws_ebs_volume_id
+  instance_id = module.production_ec2.ec2_instance_id
+}
+
+resource "null_resource" "output_metadatas" {
+  depends_on = [resource.aws_eip_association.docker_eip_assoc,
+                resource.aws_eip_association.staging_eip_assoc, 
+                resource.aws_eip_association.production_eip_assoc,
+                module.docker_ec2, module.staging_ec2, module.production_ec2]
   
   provisioner "local-exec" {
   #   command = <<EOT
   #     echo docker-ec2-IP-DNS
   #     echo PUBLIC_IP: ${module.docker_ec2.public_ip} - PUBLIC_DNS: ${module.docker_ec2.public_dns}  > docker_ec2.txt
   #   EOT
-  command = "echo PUBLIC_IP: ${module.docker_eip.public_ip} - PUBLIC_DNS: ${module.docker_eip.public_dns}  > docker_ec2.txt"
+  command = "echo Docker PUBLIC_IP: ${module.docker_eip.public_ip} - Docker PUBLIC_DNS: ${module.docker_eip.public_dns}  >> docker_ec2.txt"
+  }
+
+  provisioner "local-exec" {
+    command = "echo Staging PUBLIC_IP: ${module.staging_eip.public_ip} - Staging PUBLIC_DNS: ${module.staging_eip.public_dns}  >> docker_ec2.txt"
+  }
+
+  provisioner "local-exec" {
+    command = "echo Production PUBLIC_IP: ${module.production_eip.public_ip} - Production PUBLIC_DNS: ${module.production_eip.public_dns}  >> docker_ec2.txt"
   }
 }
