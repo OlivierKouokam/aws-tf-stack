@@ -25,8 +25,6 @@ terraform {
 
 provider "aws" {
   region = var.jenkins_region
-  # access_key = "YOUR-ACCESS-KEY"
-  # secret_key = "YOUR-SECRET-KEY"
   shared_credentials_files = ["../.secrets/credentials"]
   profile                  = "stack"
 }
@@ -81,135 +79,151 @@ module "keypair" {
   private_key_path = "../.secrets/${module.keypair.key_name}.pem"
 }
 
-# module "jenkins-ec2" {
-#   depends_on = [
-#     module.sg, module.keypair, 
-#     resource.aws_route_table_association.public_subnet_to_jenkins_igw
-#   ]
-#   source        = "../modules/ec2"
-#   subnet_id     = module.public_subnet.subnet_id
-#   instance_type = "t3.medium"
-#   aws_common_tag = {
-#     Name = "jenkins-ec2"
-#   }
-#   key_name = module.keypair.key_name
-#   # key_name        = var.static_key_name
-#   security_group_ids = [ module.sg.aws_sg_id ]
-#   # security_groups = [module.sg.aws_sg_name]
-#   private_key     = module.keypair.private_key
-#   # private_key     = ""
-#   user_data_path = "../scripts/userdata_jenkins.sh"
-# }
+module "jenkins_ec2" {
+  depends_on = [
+    module.sg, module.keypair
+  ]
+  source        = "../modules/ec2"
+  subnet_id     = module.public_subnet.subnet_id
+  instance_type = "t3.medium"
+  aws_common_tag = {
+    Name = "jenkins-ec2"
+  }
+  key_name = module.keypair.key_name
+  security_group_ids = [ module.sg.aws_sg_id ]
+  private_key     = module.keypair.private_key
+  user_data_path = "../scripts/userdata_jenkins.sh"
+}
 
-# module "staging-ec2" {
-#   depends_on    = [
-#     module.sg, module.keypair, 
-#     resource.aws_route_table_association.public_subnet_to_jenkins_igw
-#   ]
-#   source        = "../modules/ec2"
-#   subnet_id     = module.public_subnet.subnet_id
-#   instance_type = "t3.medium"
-#   aws_common_tag = {
-#     Name = "staging-ec2"
-#   }
-#   key_name = module.keypair.key_name
-#   # key_name        = var.static_key_name
-#   security_group_ids = [ module.sg.aws_sg_id ]
-#   # security_groups = [module.sg.aws_sg_name]
-#   private_key     = module.keypair.private_key
-#   # private_key     = ""
-#   user_data_path = "../scripts/userdata_docker.sh"
-# }
-
-module "ebs" {
+module "jenkins_ebs" {
   source = "../modules/ebs"
   AZ     = var.jenkins_AZ
-  size   = 20
+  size   = 10
   ebs_tag = {
-    Name = "docker-ebs"
+    Name = "jenkins-ebs"
   }
 }
 
-resource "aws_volume_attachment" "ebs_att" {
+resource "aws_volume_attachment" "jenkins_ebs_att" {
   device_name = "/dev/sdh"
-  volume_id   = module.ebs.aws_ebs_volume_id
-  instance_id = module.production-ec2.ec2_instance_id
+  volume_id   = module.jenkins_ebs.aws_ebs_volume_id
+  instance_id = module.jenkins_ec2.ec2_instance_id
 }
 
-module "production-ec2" {
+module "jenkins_eip" {
+  depends_on = [ module.jenkins_ec2 ]
+  source = "../modules/eip"
+  eip_tags = {
+    Name = "jenkins_eip"
+  }
+}
+
+resource "aws_eip_association" "jenkins_eip_assoc" {
+  instance_id = module.jenkins_ec2.ec2_instance_id
+  allocation_id = module.jenkins_eip.eip_id
+}
+
+module "staging_ec2" {
   depends_on    = [
-    module.sg, module.keypair, 
-    resource.aws_route_table_association.public_subnet_to_jenkins_igw
+    module.sg, module.keypair
+  ]
+  source        = "../modules/ec2"
+  subnet_id     = module.public_subnet.subnet_id
+  instance_type = "t3.medium"
+  aws_common_tag = {
+    Name = "staging-ec2"
+  }
+  key_name = module.keypair.key_name
+  security_group_ids = [ module.sg.aws_sg_id ]
+  private_key     = module.keypair.private_key
+  user_data_path = "../scripts/userdata_worker.sh"
+}
+
+module "staging_eip" {
+  depends_on = [ module.staging_ec2 ]
+  source = "../modules/eip"
+  eip_tags = {
+    Name = "staging_eip"
+  }
+}
+
+resource "aws_eip_association" "staging_eip_assoc" {
+  instance_id = module.staging_ec2.ec2_instance_id
+  allocation_id = module.staging_eip.eip_id
+}
+
+module "staging_ebs" {
+  source = "../modules/ebs"
+  AZ     = var.jenkins_AZ
+  size   = 12
+  ebs_tag = {
+    Name = "staging-ebs"
+  }
+}
+
+resource "aws_volume_attachment" "staging_ebs_att" {
+  device_name = "/dev/sdh"
+  volume_id   = module.staging_ebs.aws_ebs_volume_id
+  instance_id = module.staging_ec2.ec2_instance_id
+}
+
+module "production_ec2" {
+  depends_on    = [
+    module.sg, module.keypair
   ]
   subnet_id     = module.public_subnet.subnet_id
   source        = "../modules/ec2"
-  instance_type = "t2.medium"
+  instance_type = "t3.medium"
   aws_common_tag = {
     Name = "production-ec2"
   }
   key_name = module.keypair.key_name
-  # key_name        = var.static_key_name
   security_group_ids = [ module.sg.aws_sg_id ]
-  # security_groups = [module.sg.aws_sg_name]
   private_key     = module.keypair.private_key
-  # private_key     = ""
-  user_data_path = "../scripts/userdata_docker.sh"
+  user_data_path = "../scripts/userdata_worker.sh"
 }
 
-# module "jenkins_eip" {
-#   depends_on = [ resource.aws_route_table_association.public_subnet_to_jenkins_igw ]
-#   source = "../modules/eip"
-#   eip_tags = {
-#     Name = "jenkins_eip"
-#   }
-# }
-
-module "prod_eip" {
-  depends_on = [ resource.aws_route_table_association.public_subnet_to_jenkins_igw ]
+module "production_eip" {
+  depends_on = [ module.production_ec2 ]
   source = "../modules/eip"
   eip_tags = {
-    Name = "prod_eip"
+    Name = "production_eip"
   }
 }
 
-# module "stag_eip" {
-#   depends_on = [ resource.aws_route_table_association.public_subnet_to_jenkins_igw ]
-#   source = "../modules/eip"
-#   eip_tags = {
-#     Name = "stag_eip"
-#   }
-# }
-
-# resource "aws_eip_association" "jenkins_eip_assoc" {
-#   instance_id = module.jenkins-ec2.ec2_instance_id
-#   allocation_id = module.jenkins_eip.eip_id
-# }
-
-resource "aws_eip_association" "prod_eip_assoc" {
-  instance_id = module.production-ec2.ec2_instance_id
-  allocation_id = module.prod_eip.eip_id
+resource "aws_eip_association" "production_eip_assoc" {
+  instance_id = module.production_ec2.ec2_instance_id
+  allocation_id = module.production_eip.eip_id
 }
 
-# resource "aws_eip_association" "stag_eip_assoc" {
-#   instance_id = module.staging-ec2.ec2_instance_id
-#   allocation_id = module.stag_eip.eip_id
-# }
+module "production_ebs" {
+  source = "../modules/ebs"
+  AZ     = var.jenkins_AZ
+  size   = 14
+  ebs_tag = {
+    Name = "staging-ebs"
+  }
+}
+
+resource "aws_volume_attachment" "production_ebs_att" {
+  device_name = "/dev/sdh"
+  volume_id   = module.production_ebs.aws_ebs_volume_id
+  instance_id = module.production_ec2.ec2_instance_id
+}
+
 
 resource "null_resource" "output_datas" {
   depends_on = [ 
-    # resource.aws_eip_association.jenkins_eip_assoc, 
-    resource.aws_eip_association.prod_eip_assoc, 
-    # resource.aws_eip_association.stag_eip_assoc
-    # module.jenkins_eip, module.prod_eip, module.stag_eip
+    module.jenkins_eip, module.production_eip, module.staging_eip
   ]
-  # provisioner "local-exec" {
-  #   command = "echo jenkins_ec2 - PUBLIC_IP: ${module.jenkins-ec2.public_ip} - PUBLIC_DNS: ${module.jenkins-ec2.public_dns} > jenkins_ec2.txt"
-  # }
-  # provisioner "local-exec" {
-  #   command = "echo staging_ec2 - PUBLIC_IP: ${module.staging-ec2.public_ip} - PUBLIC_DNS: ${module.staging-ec2.public_dns} >> jenkins_ec2.txt"
-  # }
   provisioner "local-exec" {
-    command = "echo production_ec2 - PUBLIC_IP: ${module.production-ec2.public_ip} - PUBLIC_DNS: ${module.production-ec2.public_dns} >> jenkins_ec2.txt"
+    command = "echo jenkins_ec2 - PUBLIC_IP: ${module.jenkins_eip.public_ip} - PUBLIC_DNS: ${module.jenkins_eip.public_dns} >> jenkins_ec2.txt"
+  }
+  provisioner "local-exec" {
+    command = "echo staging_ec2 - PUBLIC_IP: ${module.staging_eip.public_ip} - PUBLIC_DNS: ${module.staging_eip.public_dns} >> jenkins_ec2.txt"
+  }
+  provisioner "local-exec" {
+    command = "echo production_ec2 - PUBLIC_IP: ${module.production_eip.public_ip} - PUBLIC_DNS: ${module.production_eip.public_dns} >> jenkins_ec2.txt"
   }
 }
 

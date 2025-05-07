@@ -22,8 +22,6 @@ terraform {
 
 provider "aws" {
   region = var.docker_region
-  # access_key = "YOUR-ACCESS-KEY"
-  # secret_key = "YOUR-SECRET-KEY"
   shared_credentials_files = ["../.secrets/credentials"]
   profile                  = "stack"
 }
@@ -114,7 +112,7 @@ module "production_ec2" {
   subnet_id     = module.public_subnet.subnet_id
   instance_type = "t3.medium"
   aws_common_tag = {
-    Name = "docker-ec2"
+    Name = "production-ec2"
   }
   key_name           = module.keypair.key_name
   security_group_ids = [module.sg.aws_sg_id]
@@ -131,7 +129,7 @@ module "docker_eip" {
   }
 }
 
-module "ebs" {
+module "docker_ebs" {
   source = "../modules/ebs"
   AZ     = var.docker_AZ
   size   = 20
@@ -145,9 +143,9 @@ resource "aws_eip_association" "docker_eip_assoc" {
   allocation_id = module.docker_eip.eip_id
 }
 
-resource "aws_volume_attachment" "ebs_att" {
+resource "aws_volume_attachment" "docker_ebs_att" {
   device_name = "/dev/sdh"
-  volume_id   = module.ebs.aws_ebs_volume_id
+  volume_id   = module.docker_ebs.aws_ebs_volume_id
   instance_id = module.docker_ec2.ec2_instance_id
 }
 
@@ -208,10 +206,7 @@ resource "aws_volume_attachment" "production_ebs_att" {
 }
 
 resource "null_resource" "output_metadatas" {
-  depends_on = [resource.aws_eip_association.docker_eip_assoc,
-                resource.aws_eip_association.staging_eip_assoc, 
-                resource.aws_eip_association.production_eip_assoc,
-                module.docker_ec2, module.staging_ec2, module.production_ec2]
+  depends_on = [module.docker_ec2, module.staging_ec2, module.production_ec2]
   
   provisioner "local-exec" {
   #   command = <<EOT

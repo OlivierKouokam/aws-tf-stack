@@ -5,3 +5,5 @@ Production PUBLIC_IP: 35.174.119.228 - Production PUBLIC_DNS: ec2-35-174-119-228
 Docker PUBLIC_IP: 54.85.255.20 - Docker PUBLIC_DNS: ec2-54-85-255-20.compute-1.amazonaws.com  
 Staging PUBLIC_IP: 100.27.117.191 - Staging PUBLIC_DNS: ec2-100-27-117-191.compute-1.amazonaws.com  
 Production PUBLIC_IP: 52.23.33.58 - Production PUBLIC_DNS: ec2-52-23-33-58.compute-1.amazonaws.com  
+
+Docker PUBLIC_IP: 3.218.108.249 - Docker PUBLIC_DNS: ec2-3-218-108-249.compute-1.amazonaws.com  
