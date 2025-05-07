@@ -1,0 +1,1 @@
+PUBLIC_IP: 13.216.60.234 - PUBLIC_DNS: ec2-13-216-60-234.compute-1.amazonaws.com 

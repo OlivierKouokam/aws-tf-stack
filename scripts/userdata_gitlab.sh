@@ -18,3 +18,24 @@ sudo chmod +x /usr/bin/docker
 #sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 #sudo chmod +x /usr/local/bin/docker-compose
 #/usr/local/bin/docker-compose up -d
+
+
+# Script de provisionnement pour formater et monter le volume EBS
+#   user_data = <<-EOF
+#               #!/bin/bash
+#               # Formater le volume EBS
+#               mkfs.ext4 /dev/sdf
+
+#               # Créer un point de montage
+#               mkdir -p /mnt/data
+
+#               # Monter le volume EBS
+#               mount /dev/sdf /mnt/data
+
+#               # Ajouter au fstab pour rendre ce montage persistant
+#               echo '/dev/sdf /mnt/data ext4 defaults,nofail 0 2' >> /etc/fstab
+
+#               # Optionnel: déplacer l'installation des applications vers /mnt/data
+#               # mv /var/www/html /mnt/data/
+#               # ln -s /mnt/data/html /var/www/html
+#               EOF
