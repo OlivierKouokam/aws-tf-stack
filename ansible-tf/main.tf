@@ -22,8 +22,6 @@ terraform {
 
 provider "aws" {
   region = var.ansible_region
-  # access_key = "YOUR-ACCESS-KEY"
-  # secret_key = "YOUR-SECRET-KEY"
   shared_credentials_files = ["../.secrets/credentials"]
   profile                  = "stack"
 }
@@ -78,7 +76,7 @@ module "keypair" {
   private_key_path = "../.secrets/${module.keypair.key_name}.pem"
 }
 
-module "ansible-ec2" {
+module "ansible_ec2" {
   depends_on = [
     module.sg, module.keypair,
     resource.aws_route_table_association.public_subnet_to_ansible_igw
@@ -98,7 +96,7 @@ module "ansible-ec2" {
   user_data_path = "../scripts/userdata_ansible.sh"
 }
 
-module "staging-ec2" {
+module "staging_ec2" {
   depends_on    = [module.sg, module.keypair]
   source        = "../modules/ec2"
   subnet_id     = module.public_subnet.subnet_id
@@ -112,10 +110,10 @@ module "staging-ec2" {
   # security_groups = [module.sg.aws_sg_name]
   private_key = module.keypair.private_key
   # private_key     = ""
-  user_data_path = "../scripts/userdata_docker.sh"
+  user_data_path = "../scripts/userdata_worker.sh"
 }
 
-module "production-ec2" {
+module "production_ec2" {
   depends_on    = [module.sg, module.keypair]
   source        = "../modules/ec2"
   subnet_id     = module.public_subnet.subnet_id
@@ -129,27 +127,27 @@ module "production-ec2" {
   # security_groups = [module.sg.aws_sg_name]
   private_key = module.keypair.private_key
   # private_key     = ""
-  user_data_path = "../scripts/userdata_docker.sh"
+  user_data_path = "../scripts/userdata_worker.sh"
 }
 
 module "ansible_eip" {
-  depends_on = [resource.aws_route_table_association.public_subnet_to_ansible_igw]
+  depends_on = [ module.ansible_ec2 ]
   source     = "../modules/eip"
   eip_tags = {
     Name = "ansible_eip"
   }
 }
 
-module "prod_eip" {
-  depends_on = [resource.aws_route_table_association.public_subnet_to_ansible_igw]
+module "production_eip" {
+  depends_on = [ module.production_ec2 ]
   source     = "../modules/eip"
   eip_tags = {
     Name = "prod_eip"
   }
 }
 
-module "stag_eip" {
-  depends_on = [resource.aws_route_table_association.public_subnet_to_ansible_igw]
+module "staging_eip" {
+  depends_on = [ module.staging_ec2 ]
   source     = "../modules/eip"
   eip_tags = {
     Name = "stag_eip"
@@ -157,28 +155,76 @@ module "stag_eip" {
 }
 
 resource "aws_eip_association" "ansible_eip_assoc" {
-  instance_id   = module.ansible-ec2.ec2_instance_id
+  instance_id   = module.ansible_ec2.ec2_instance_id
   allocation_id = module.ansible_eip.eip_id
 }
 
-resource "aws_eip_association" "prod_eip_assoc" {
-  instance_id   = module.production-ec2.ec2_instance_id
-  allocation_id = module.prod_eip.eip_id
+resource "aws_eip_association" "production_eip_assoc" {
+  instance_id   = module.production_ec2.ec2_instance_id
+  allocation_id = module.production_eip.eip_id
 }
 
-resource "aws_eip_association" "stag_eip_assoc" {
-  instance_id   = module.staging-ec2.ec2_instance_id
-  allocation_id = module.stag_eip.eip_id
+resource "aws_eip_association" "staging_eip_assoc" {
+  instance_id   = module.staging_ec2.ec2_instance_id
+  allocation_id = module.staging_eip.eip_id
+}
+
+module "ansible_ebs" {
+  source = "../modules/ebs"
+  AZ     = var.ansible_AZ
+  size   = 10
+  ebs_tag = {
+    Name = "ansible_ebs"
+  }
+}
+
+module "staging_ebs" {
+  source = "../modules/ebs"
+  AZ     = var.ansible_AZ
+  size   = 12
+  ebs_tag = {
+    Name = "staging_ebs"
+  }
+}
+
+module "production_ebs" {
+  source = "../modules/ebs"
+  AZ     = var.ansible_AZ
+  size   = 14
+  ebs_tag = {
+    Name = "production_ebs"
+  }
+}
+
+resource "aws_volume_attachment" "ansible_ebs_att" {
+  device_name = "/dev/sdh"
+  volume_id   = module.ansible_ebs.aws_ebs_volume_id
+  instance_id = module.ansible_ec2.ec2_instance_id
+}
+
+resource "aws_volume_attachment" "staging_ebs_att" {
+  device_name = "/dev/sdh"
+  volume_id   = module.staging_ebs.aws_ebs_volume_id
+  instance_id = module.staging_ec2.ec2_instance_id
+}
+
+resource "aws_volume_attachment" "production_ebs_att" {
+  device_name = "/dev/sdh"
+  volume_id   = module.production_ebs.aws_ebs_volume_id
+  instance_id = module.production_ec2.ec2_instance_id
 }
 
 resource "null_resource" "output_metadatas" {
   depends_on = [
-    resource.aws_eip_association.ansible_eip_assoc,
-    resource.aws_eip_association.prod_eip_assoc,
-    resource.aws_eip_association.stag_eip_assoc
-    # module.jenkins_eip, module.prod_eip, module.stag_eip
+    module.ansible_eip, module.production_eip, module.staging_eip
   ]
   provisioner "local-exec" {
-    command = "echo PUBLIC_IP: ${module.ansible-ec2.public_ip} - PUBLIC_DNS: ${module.ansible-ec2.public_dns}  > ansible_ec2.txt;\n echo PUBLIC_IP: ${module.staging-ec2.public_ip} - PUBLIC_DNS: ${module.staging-ec2.public_dns}  > staging_ec2.txt;\n echo PUBLIC_IP: ${module.production-ec2.public_ip} - PUBLIC_DNS: ${module.production-ec2.public_dns}  > production_ec2.txt;\n"
+    command = "echo PUBLIC_IP: ${module.ansible_eip.public_ip} - PUBLIC_DNS: ${module.ansible_eip.public_dns}  >> ansible_ec2.txt"
+  }
+  provisioner "local-exec" {
+    command = "echo PUBLIC_IP: ${module.staging_eip.public_ip} - PUBLIC_DNS: ${module.staging_eip.public_dns}  >> staging_ec2.txt"
+  }
+  provisioner "local-exec" {
+    command = "echo PUBLIC_IP: ${module.production_eip.public_ip} - PUBLIC_DNS: ${module.production_eip.public_dns}  >> production_ec2.txt"
   }
 }
