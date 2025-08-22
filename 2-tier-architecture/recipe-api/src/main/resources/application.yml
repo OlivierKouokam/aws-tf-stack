@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: recipe-demo
+  datasource:
+    url: jdbc:mysql://localhost:3306/${spring.application.name}
+    username: db_username
+    password: db_password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate.ddl-auto: update
+    show-sql: true
+    defer-datasource-initialization: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:db/data.sql
+    
+
+logging:
+  level:
+    org.springframework.security: trace
+    org.springframework.web: debug
+
+app:
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
+  secret-key: __SECRET_KEY_PLACEHOLDER__
+    #  secret-key: Nnyu9QZEZka7BtDUzpMR0oc334KXdLBUhjyNlSXsBFE= 
+  expiration-time: 86400000
+
+server:
+  port: 8443
+  ssl:
+    key-store: classpath:keystore.p12
+    key-store-password: password
+    key-store-type: PKCS12
+    key-alias: localhost

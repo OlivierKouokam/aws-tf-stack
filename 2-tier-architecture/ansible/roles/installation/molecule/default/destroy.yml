@@ -1,0 +1,9 @@
+---
+- name: Deletes docker packages and cleans up docker files
+  hosts: staging
+  become: true
+  tasks:
+    - name: Exécuter les tâches de destruction Docker
+      include_role:
+        name: ../../../cleanup-docker
+        tasks_from: destroy

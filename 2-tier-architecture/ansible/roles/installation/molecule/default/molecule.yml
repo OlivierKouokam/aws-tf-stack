@@ -1,0 +1,42 @@
+---
+driver:
+  name: default
+  options:
+    managed: false            # on ne gère pas les instances, on les crée manuellement
+
+platforms: 
+  - name: staging
+
+
+# L’étape “lint” devient un bloc de commandes shell
+lint: |
+  set -e
+  yamllint .                    # valide tous les YAML
+  ansible-lint ../../../build            # adapte le chemin vers votre rôle build-image
+
+provisioner:
+  name: ansible
+  inventory:
+    links:
+      hosts: ../../../../host.yml
+  playbooks:
+    converge: converge.yml
+  lint:
+    name: ansible-lint         # Vérifie vos playbooks et rôles Ansible
+
+verifier:
+  name: ansible
+
+
+scenario:
+  test_sequence:
+    - dependency               # installation des collections / requirements
+    - syntax                   # ansible-playbook --syntax-check
+    - create                   # lancement des containers
+    - prepare                  # hooks éventuels
+    - converge                 # import_role build-image
+    - side_effect              # tests d’effets de bord personnalisés
+    - verify                   # vérification via Ansible ou Testinfra
+    - cleanup                  # nettoyage final
+    - destroy  
+

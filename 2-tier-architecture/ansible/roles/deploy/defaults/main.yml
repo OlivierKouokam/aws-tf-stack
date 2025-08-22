@@ -1,0 +1,61 @@
+---
+# defaults file for deployment
+
+# Images et tags
+tag_api: latest
+tag_front: latest
+
+# Conteneurs
+api_container: "recipe_api"
+db_container: "recipe_db"
+frontend_container: "recipe_frontend"
+
+# Ports
+api_ports:
+  - "8080:8080"
+  - "8443:8443"
+db_ports:
+  - "3306:3306"
+frontend_ports:
+  - "5173:80"
+
+#public ip of api
+public_ip: "your_public_ip"
+
+# Environnement
+api_env:
+  - "SPRING_DATASOURCE_URL=jdbc:mysql://recipe_db:3306/recipe-demo?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+  - "SPRING_DATASOURCE_USERNAME=recipe_user"
+  - "SPRING_APPLICATION_NAME=recipe-demo"
+  - "FRONTEND_URL=http://{{ public_ip }}:5173"
+  - "SPRING_DATASOURCE_PASSWORD=recipe_pass"
+
+db_env:
+  - "MYSQL_ROOT_PASSWORD=root_password"
+  - "MYSQL_DATABASE=recipe-demo"
+  - "MYSQL_USER=recipe_user"
+  - "MYSQL_PASSWORD=recipe_pass"
+
+# Volumes et réseaux
+db_volume: "recipe_db_data:/var/lib/mysql"
+network: "recipe-net"
+
+# Healthcheck DB
+db_healthcheck:
+  test: '["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "recipe_user", "-precipe_pass"]'
+  interval: "10s"
+  timeout: "5s"
+  retries: 5
+  start_period: "10s"
+
+# Chemins des sources
+compose_file_path: "{{ lookup('env','HOME') }}/deploy/docker-compose.yml"
+compose_project_dir: "{{ lookup('env','HOME') }}/deploy/"
+
+# Répertoire de sauvegarde
+backup_dir: "{{ playbook_dir }}/../backups"
+deployment_version: 
+  frontend: "{{ tag_front }}"
+  api: "{{ tag_api }}"
+rollback_before_deploy: true
+backup_enabled: true

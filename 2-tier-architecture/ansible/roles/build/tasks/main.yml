@@ -1,0 +1,34 @@
+---
+# tasks file for build-image
+
+- name: Synchroniser le code  avec la VM
+  ansible.posix.synchronize:
+    src: "{{ lookup('env','HOME') }}/rex-devsecops/"
+    dest: "{{ lookup('env','HOME') }}/deploy/"
+    recursive: true
+
+- name: Construire l'image Docker de l'API
+  community.docker.docker_image:
+    name: "api:{{ tag_api }}"
+    build:
+      path: "{{ api_src_path }}"
+      pull: yes
+      nocache: no
+      labels:
+        project: "api"
+        built_by: "ansible"
+    source: build  
+    force_source: true  # reconstruit même si l'image existe
+
+- name: Construire l'image Docker du frontend
+  community.docker.docker_image:
+    name: "frontend:{{ tag_front }}"
+    build:
+      path: "{{ frontend_src_path }}"
+      pull: yes
+      nocache: no
+      labels:
+        project: "frontend"
+        built_by: "ansible"
+    source: build
+    force_source: true

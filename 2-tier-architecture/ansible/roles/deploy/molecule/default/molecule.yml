@@ -1,0 +1,31 @@
+---
+dependency:
+  name: galaxy
+
+driver:
+  name: default
+
+platforms: 
+  - name: staging
+
+provisioner:
+  name: ansible
+  inventory:
+    links:
+      hosts: ../../../../host.yml
+
+verifier:
+  name: ansible
+
+
+scenario:
+  test_sequence:
+    - destroy                  # nettoyage final
+    - dependency               # installation des collections / requirements
+    - syntax                   # ansible-playbook --syntax-check
+    - create                   # lancement des containers
+    - prepare                  # hooks éventuels
+    - converge                 # import_role build-image
+    - side_effect              # tests d’effets de bord personnalisés
+    - verify                   # vérification via Ansible ou Testinfra
+   

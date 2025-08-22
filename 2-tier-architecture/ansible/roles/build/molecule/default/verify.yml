@@ -1,0 +1,35 @@
+---
+# verify.yml: Vérification de la bonne création des images Docker
+- name: Vérifier la présence des images Docker construite
+  hosts: staging
+  gather_facts: false
+  become: true
+  vars:
+    tag_api: v1
+    tag_front: v1
+
+  tasks:
+    - name: Récupérer les infos de l'image API
+      community.docker.docker_image_info:
+        name: "api:{{ tag_api }}"
+      register: api_image_info
+
+    - name: L'image Docker 'api:{{ tag_api }}' doit être présente
+      assert:
+        that:
+          - api_image_info.images | length > 0
+        fail_msg: "L'image Docker api:{{ tag_api }} n'a pas été trouvée !"
+        success_msg: "L'image Docker api:{{ tag_api }} est présente."
+
+    - name: Récupérer les infos de l'image Frontend
+      community.docker.docker_image_info:
+        name: "frontend:{{ tag_front }}"
+      register: frontend_image_info
+
+    - name: L'image Docker 'frontend:{{ tag_front }}' doit être présente
+      assert:
+        that:
+          - frontend_image_info.images | length > 0
+        fail_msg: "L'image Docker frontend:{{ tag_front }} n'a pas été trouvée !"
+        success_msg: "L'image Docker frontend:{{ tag_front }} est présente."
+

@@ -1,0 +1,38 @@
+---
+
+- name: Arrêter le service Docker
+  ansible.builtin.service:
+    name: docker
+    state: stopped
+
+- name: Désactiver le service Docker
+  ansible.builtin.service:
+    name: docker
+    enabled: false
+
+- name: Supprimer les paquets Docker et dépendances
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: absent
+    purge: yes
+    autoremove: yes
+    update_cache: yes
+
+- name: Supprimer le dépôt Docker officiel
+  ansible.builtin.file:
+    path: /etc/apt/sources.list.d/docker.list
+    state: absent
+
+- name: Supprimer la clé GPG Docker
+  ansible.builtin.file:
+    path: /etc/apt/keyrings/docker.asc
+    state: absent
+
+- name: Mettre à jour le cache APT après suppression
+  ansible.builtin.apt:
+    update_cache: yes

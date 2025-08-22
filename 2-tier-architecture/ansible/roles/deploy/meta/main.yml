@@ -1,0 +1,28 @@
+galaxy_info:
+  author: Aurelie KAMGANG & Anselme TCHASSEM
+  description: Rôle Ansible pour le déploiement avec Docker Compose
+  company: EAZYTraining
+
+  role_name: deploy
+  namespace: eazytraining
+
+  license: MIT
+  min_ansible_version: "2.12"
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - all
+    - name: CentOS
+      versions:
+        - "8"
+
+  galaxy_tags:
+    - docker
+    - compose
+    - deploy
+    - eazytraining
+
+dependencies:
+  - role: installation
+  - role: build

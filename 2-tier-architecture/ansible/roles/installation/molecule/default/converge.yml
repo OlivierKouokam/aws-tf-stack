@@ -1,0 +1,6 @@
+---
+- name: Converge installation docker
+  hosts: staging
+  become: true
+  roles:
+    - role: ../../../installation

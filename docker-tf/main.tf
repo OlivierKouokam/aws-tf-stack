@@ -21,7 +21,7 @@ terraform {
 }
 
 provider "aws" {
-  region = var.docker_region
+  region                   = var.docker_region
   shared_credentials_files = ["../.secrets/credentials"]
   profile                  = "stack"
 }
@@ -76,6 +76,7 @@ module "keypair" {
   private_key_path = "../.secrets/${module.keypair.key_name}.pem"
 }
 
+/*
 module "docker_ec2" {
   depends_on    = [module.sg, module.keypair]
   source        = "../modules/ec2"
@@ -120,7 +121,26 @@ module "production_ec2" {
   private_key    = module.keypair.private_key
   user_data_path = "../scripts/userdata_worker.sh"
 }
+*/
 
+module "stack_ec2" {
+  for_each = {
+    docker     = { name = "docker-ec2", user_data = "../scripts/userdata_docker.sh" }
+    staging    = { name = "staging-ec2", user_data = "../scripts/userdata_worker.sh" }
+    production = { name = "production-ec2", user_data = "../scripts/userdata_worker.sh" }
+  }
+
+  source             = "../modules/ec2"
+  subnet_id          = module.public_subnet.subnet_id
+  instance_type      = "t3.medium"
+  aws_common_tag     = { Name = "${each.key}-ec2" }
+  key_name           = module.keypair.key_name
+  security_group_ids = [module.sg.aws_sg_id]
+  private_key        = module.keypair.private_key
+  user_data_path     = each.value.user_data
+}
+
+/*
 module "docker_eip" {
   depends_on = [ module.docker_ec2 ]
   source = "../modules/eip"
@@ -129,31 +149,44 @@ module "docker_eip" {
   }
 }
 
+module "staging_eip" {
+  depends_on = [ module.staging_ec2]
+  source = "../modules/eip"
+  eip_tags = {
+    Name = "staging_eip"
+  }
+}
+
+module "production_eip" {
+  depends_on = [ module.staging_ec2]
+  source = "../modules/eip"
+  eip_tags = {
+    Name = "production_eip"
+  }
+}
+*/
+
+module "stack_eip" {
+  for_each = toset(["docker", "staging", "production"])
+
+  source = "../modules/eip"
+
+  eip_tags = {
+    Name = "${each.key}_eip"
+  }
+
+  depends_on = [
+    module.stack_ec2
+  ]
+}
+
+/*
 module "docker_ebs" {
   source = "../modules/ebs"
   AZ     = var.docker_AZ
   size   = 20
   ebs_tag = {
     Name = "docker_ebs"
-  }
-}
-
-resource "aws_eip_association" "docker_eip_assoc" {
-  instance_id   = module.docker_ec2.ec2_instance_id
-  allocation_id = module.docker_eip.eip_id
-}
-
-resource "aws_volume_attachment" "docker_ebs_att" {
-  device_name = "/dev/sdh"
-  volume_id   = module.docker_ebs.aws_ebs_volume_id
-  instance_id = module.docker_ec2.ec2_instance_id
-}
-
-module "staging_eip" {
-  depends_on = [ module.staging_ec2]
-  source = "../modules/eip"
-  eip_tags = {
-    Name = "staging_eip"
   }
 }
 
@@ -166,25 +199,6 @@ module "staging_ebs" {
   }
 }
 
-resource "aws_eip_association" "staging_eip_assoc" {
-  instance_id   = module.staging_ec2.ec2_instance_id
-  allocation_id = module.staging_eip.eip_id
-}
-
-resource "aws_volume_attachment" "staging_ebs_att" {
-  device_name = "/dev/sdh"
-  volume_id   = module.staging_ebs.aws_ebs_volume_id
-  instance_id = module.staging_ec2.ec2_instance_id
-}
-
-module "production_eip" {
-  depends_on = [ module.staging_ec2]
-  source = "../modules/eip"
-  eip_tags = {
-    Name = "production_eip"
-  }
-}
-
 module "production_ebs" {
   source = "../modules/ebs"
   AZ     = var.docker_AZ
@@ -193,10 +207,80 @@ module "production_ebs" {
     Name = "production_ebs"
   }
 }
+*/
+
+module "stack_ebs" {
+  for_each = {
+    docker     = { az = var.docker_AZ, size = 20 }
+    staging    = { az = var.docker_AZ, size = 20 }
+    production = { az = var.docker_AZ, size = 20 }
+  }
+
+  source = "../modules/ebs"
+
+  AZ   = each.value.az
+  size = each.value.size
+
+  ebs_tag = {
+    Name = "${each.key}_ebs"
+  }
+}
+
+/*
+resource "aws_eip_association" "docker_eip_assoc" {
+  instance_id   = module.docker_ec2.ec2_instance_id
+  allocation_id = module.docker_eip.eip_id
+}
+
+resource "aws_eip_association" "staging_eip_assoc" {
+  instance_id   = module.staging_ec2.ec2_instance_id
+  allocation_id = module.staging_eip.eip_id
+}
 
 resource "aws_eip_association" "production_eip_assoc" {
   instance_id   = module.production_ec2.ec2_instance_id
   allocation_id = module.production_eip.eip_id
+}
+
+resource "aws_eip_association" "eip_assoc" {
+  for_each = {
+    docker     = {
+      instance_id   = module.docker_ec2.ec2_instance_id
+      allocation_id = module.docker_eip.eip_id
+    }
+    staging    = {
+      instance_id   = module.staging_ec2.ec2_instance_id
+      allocation_id = module.staging_eip.eip_id
+    }
+    production = {
+      instance_id   = module.production_ec2.ec2_instance_id
+      allocation_id = module.production_eip.eip_id
+    }
+  }
+
+  instance_id   = each.value.instance_id
+  allocation_id = each.value.allocation_id
+}
+*/
+
+resource "aws_eip_association" "eip_assoc" {
+  for_each = toset(["docker", "staging", "production"])
+
+  instance_id   = module.stack_ec2[each.key].ec2_instance_id
+  allocation_id = module.stack_eip[each.key].eip_id
+}
+
+/*
+resource "aws_volume_attachment" "docker_ebs_att" {
+  device_name = "/dev/sdh"
+  volume_id   = module.docker_ebs.aws_ebs_volume_id
+  instance_id = module.docker_ec2.ec2_instance_id
+}
+
+resource "aws_volume_attachment" "staging_ebs_att" {
+  device_name = "/dev/sdh"
+  volume_id   = module.staging_ebs.aws_ebs_volume_id
+  instance_id = module.staging_ec2.ec2_instance_id
 }
 
 resource "aws_volume_attachment" "production_ebs_att" {
@@ -205,6 +289,39 @@ resource "aws_volume_attachment" "production_ebs_att" {
   instance_id = module.production_ec2.ec2_instance_id
 }
 
+resource "aws_volume_attachment" "ebs_att" {
+  for_each = {
+    docker     = {
+      volume_id   = module.docker_ebs.aws_ebs_volume_id
+      instance_id = module.docker_ec2.ec2_instance_id
+    }
+    staging    = {
+      volume_id   = module.staging_ebs.aws_ebs_volume_id
+      instance_id = module.staging_ec2.ec2_instance_id
+    }
+    production = {
+      volume_id   = module.production_ebs.aws_ebs_volume_id
+      instance_id = module.production_ec2.ec2_instance_id
+    }
+  }
+
+  device_name = "/dev/sdh"
+  volume_id   = each.value.volume_id
+  instance_id = each.value.instance_id
+  force_detach = true # facultatif, selon besoin
+}
+*/
+
+resource "aws_volume_attachment" "ebs_att" {
+  for_each = toset(["docker", "staging", "production"])
+
+  device_name  = "/dev/sdh"
+  volume_id    = module.stack_ebs[each.key].aws_ebs_volume_id
+  instance_id  = module.stack_ec2[each.key].ec2_instance_id
+  force_detach = true
+}
+
+/*
 resource "null_resource" "output_metadatas" {
   depends_on = [module.docker_ec2, module.staging_ec2, module.production_ec2]
   
@@ -222,5 +339,22 @@ resource "null_resource" "output_metadatas" {
 
   provisioner "local-exec" {
     command = "echo Production PUBLIC_IP: ${module.production_eip.public_ip} - Production PUBLIC_DNS: ${module.production_eip.public_dns}  >> docker_ec2.txt"
+  }
+}
+*/
+
+resource "null_resource" "output_metadatas" {
+  depends_on = [module.stack_ec2, module.stack_eip]
+
+  provisioner "local-exec" {
+    command = "echo Docker PUBLIC_IP: ${module.stack_eip["docker"].public_ip} - Docker PUBLIC_DNS: ${module.stack_eip["docker"].public_dns}  >> docker_ec2.txt"
+  }
+
+  provisioner "local-exec" {
+    command = "echo Staging PUBLIC_IP: ${module.stack_eip["staging"].public_ip} - Staging PUBLIC_DNS: ${module.stack_eip["staging"].public_dns}  >> docker_ec2.txt"
+  }
+
+  provisioner "local-exec" {
+    command = "echo Production PUBLIC_IP: ${module.stack_eip["production"].public_ip} - Production PUBLIC_DNS: ${module.stack_eip["production"].public_dns}  >> docker_ec2.txt"
   }
 }

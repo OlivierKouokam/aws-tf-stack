@@ -21,7 +21,7 @@ terraform {
 }
 
 provider "aws" {
-  region = var.terraform_region
+  region                   = var.terraform_region
   shared_credentials_files = ["../.secrets/credentials"]
   profile                  = "stack"
 }
@@ -83,18 +83,19 @@ module "terraform_ec2" {
   ]
   source        = "../modules/ec2"
   subnet_id     = module.public_subnet.subnet_id
-  instance_type = "t3.medium"
+  instance_type = "t3.micro"
   aws_common_tag = {
     Name = "terraform-ec2"
+
   }
-  key_name = module.keypair.key_name
+  key_name           = module.keypair.key_name
   security_group_ids = [module.sg.aws_sg_id]
-  private_key = module.keypair.private_key
-  user_data_path = "../scripts/userdata_terraform.sh"
+  private_key        = module.keypair.private_key
+  user_data_path     = "../scripts/userdata_terraform.sh"
 }
 
 module "terraform_eip" {
-  depends_on = [ module.terraform_ec2 ]
+  depends_on = [module.terraform_ec2]
   source     = "../modules/eip"
   eip_tags = {
     Name = "terraform_eip"

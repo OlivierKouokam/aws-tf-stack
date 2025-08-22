@@ -1,0 +1,11 @@
+---
+- name: Converge deploy app
+  hosts: staging
+  become: true
+  vars:
+    tag_api: v1
+    tag_front: v1
+    api_src_path: "{{ lookup('env','HOME') }}/deploy/recipe-api"
+    frontend_src_path: "{{ lookup('env','HOME') }}/deploy/recipe-app"
+  roles:
+    - role: ../../../deploy

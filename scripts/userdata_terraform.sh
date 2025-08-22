@@ -1,4 +1,9 @@
 #!/bin/bash
+
+sudo hostnamectl set-hostname terraform-tf && \
+echo "terraform-tf" | sudo tee /etc/hostname && \
+sudo sed -i 's/127.0.1.1.*/127.0.1.1 terraform-tf/' /etc/hosts
+
 sudo apt update
 sudo apt install git python3 -y
 
@@ -20,3 +25,8 @@ https://apt.releases.hashicorp.com $(lsb_release -cs) main" | \
 sudo tee /etc/apt/sources.list.d/hashicorp.list
 sudo apt update
 sudo apt install terraform
+
+# ============================
+# Installer AWS CLI si nécessaire
+# ============================
+sudo snap install aws-cli --classic

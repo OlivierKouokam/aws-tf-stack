@@ -1,0 +1,34 @@
+services:
+  app:
+    image: api
+    container_name: recipe-api-app
+    ports:
+      - "8443:8443"
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://recipe-api-db:3306/recipe_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: recipe_user
+      SPRING_DATASOURCE_PASSWORD: recipe_pass
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "true"
+      #SERVER_SSL_ENABLED: "false"
+      # SPRINGDOC_API_DOCS_PATH: /api-docs
+      FRONTEND_URL: http://your_ip:3000
+    depends_on:
+      - db
+
+  db:
+    image: mysql:8.0
+    container_name: recipe-api-db
+    environment:
+      MYSQL_DATABASE: recipe_db
+      MYSQL_USER: recipe_user
+      MYSQL_PASSWORD: recipe_pass
+      MYSQL_ROOT_PASSWORD: root_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:

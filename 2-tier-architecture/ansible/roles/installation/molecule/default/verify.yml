@@ -1,0 +1,29 @@
+- name: Vérifier la version de Docker via localhost
+  hosts: staging
+  # connection: docker
+  # gather_facts: false
+  vars:
+    docker_version: "28.2.2"
+  tasks:
+    - name: Obtenir la version de Docker
+      command: docker --version
+      register: docker_version_output
+      changed_when: false
+
+    - name: Confirmer que la socket /var/run/docker.sock est bien utilisée
+      stat:
+        path: /var/run/docker.sock
+      register: sock
+
+    - name: S’assurer que la socket Docker existe
+      assert:
+        that:
+          - sock.stat.exists
+
+    - name: Vérifier que la version est {{ docker_version }}
+      assert:
+        that:
+          - "'{{ docker_version }}' in docker_version_output.stdout"
+        fail_msg: "Version installée ({{ docker_version_output.stdout }}) != {{ docker_version }}"
+        success_msg: "Version de Docker ({{ docker_version }}) OK"
+

@@ -1,0 +1,12 @@
+---
+- name: Converge build-image
+  hosts: staging
+  become: true
+  vars:
+    tag_api: v1
+    tag_front: v1
+    api_src_path: "{{ lookup('env','HOME') }}/deploy/recipe-api"
+    frontend_src_path: "{{ lookup('env','HOME') }}/deploy/recipe-app"
+  roles:
+    - role: ../../../build
+

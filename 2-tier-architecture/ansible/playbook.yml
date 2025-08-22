@@ -1,0 +1,20 @@
+---
+- name: Déployer toute la stack Docker
+  hosts: prod
+  become: true
+
+  vars:
+    tag_api: v1
+    tag_front: v1
+    api_container: api
+    frontend_container: frontend
+    api_src_path: "{{ lookup('env','HOME') }}/deploy/recipe-api"
+    frontend_src_path: "{{ lookup('env','HOME') }}/deploy/recipe-app"
+    docker_version: "5:28.2.2-1~ubuntu.24.04~noble"
+    public_ip: "13.221.238.147"
+  
+
+  roles:
+    - roles/installation
+    - roles/build
+    - roles/deploy

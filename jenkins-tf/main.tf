@@ -1,13 +1,23 @@
 # terraform {
+#   required_providers {
+#     aws = {
+#       source  = "hashicorp/aws"
+#       version = "5.60.0"
+#     }
+#   }
+
+#   required_version = "1.9.4"
+
 #   backend "s3" {
-#     region     = "us-east-1"
+#     region = "us-east-1"
 #     # access_key = "YOUR-ACCESS-KEY"
 #     # secret_key = "YOUR-SECRET-KEY"
 #     shared_credentials_files = ["../.secrets/credentials"]
-#     bucket = "backend-eazyastuces"
-#     #dynamodb_table = "value"
-#     #encrypt = true
-#     key = "eazy-astuce.tfstate"
+#     profile                  = "stack"
+#     bucket                   = "eazy-bucket-26"
+#     dynamodb_table           = "eazy-state"
+#     encrypt                  = true
+#     key                      = "eazy-jenkins.tfstate"
 #   }
 # }
 
@@ -24,7 +34,7 @@ terraform {
 }
 
 provider "aws" {
-  region = var.jenkins_region
+  region                   = var.jenkins_region
   shared_credentials_files = ["../.secrets/credentials"]
   profile                  = "stack"
 }
@@ -89,10 +99,10 @@ module "jenkins_ec2" {
   aws_common_tag = {
     Name = "jenkins-ec2"
   }
-  key_name = module.keypair.key_name
-  security_group_ids = [ module.sg.aws_sg_id ]
-  private_key     = module.keypair.private_key
-  user_data_path = "../scripts/userdata_jenkins.sh"
+  key_name           = module.keypair.key_name
+  security_group_ids = [module.sg.aws_sg_id]
+  private_key        = module.keypair.private_key
+  user_data_path     = "../scripts/userdata_jenkins.sh"
 }
 
 module "jenkins_ebs" {
@@ -111,20 +121,20 @@ resource "aws_volume_attachment" "jenkins_ebs_att" {
 }
 
 module "jenkins_eip" {
-  depends_on = [ module.jenkins_ec2 ]
-  source = "../modules/eip"
+  depends_on = [module.jenkins_ec2]
+  source     = "../modules/eip"
   eip_tags = {
     Name = "jenkins_eip"
   }
 }
 
 resource "aws_eip_association" "jenkins_eip_assoc" {
-  instance_id = module.jenkins_ec2.ec2_instance_id
+  instance_id   = module.jenkins_ec2.ec2_instance_id
   allocation_id = module.jenkins_eip.eip_id
 }
 
 module "staging_ec2" {
-  depends_on    = [
+  depends_on = [
     module.sg, module.keypair
   ]
   source        = "../modules/ec2"
@@ -133,22 +143,22 @@ module "staging_ec2" {
   aws_common_tag = {
     Name = "staging-ec2"
   }
-  key_name = module.keypair.key_name
-  security_group_ids = [ module.sg.aws_sg_id ]
-  private_key     = module.keypair.private_key
-  user_data_path = "../scripts/userdata_worker.sh"
+  key_name           = module.keypair.key_name
+  security_group_ids = [module.sg.aws_sg_id]
+  private_key        = module.keypair.private_key
+  user_data_path     = "../scripts/userdata_worker.sh"
 }
 
 module "staging_eip" {
-  depends_on = [ module.staging_ec2 ]
-  source = "../modules/eip"
+  depends_on = [module.staging_ec2]
+  source     = "../modules/eip"
   eip_tags = {
     Name = "staging_eip"
   }
 }
 
 resource "aws_eip_association" "staging_eip_assoc" {
-  instance_id = module.staging_ec2.ec2_instance_id
+  instance_id   = module.staging_ec2.ec2_instance_id
   allocation_id = module.staging_eip.eip_id
 }
 
@@ -168,7 +178,7 @@ resource "aws_volume_attachment" "staging_ebs_att" {
 }
 
 module "production_ec2" {
-  depends_on    = [
+  depends_on = [
     module.sg, module.keypair
   ]
   subnet_id     = module.public_subnet.subnet_id
@@ -177,22 +187,22 @@ module "production_ec2" {
   aws_common_tag = {
     Name = "production-ec2"
   }
-  key_name = module.keypair.key_name
-  security_group_ids = [ module.sg.aws_sg_id ]
-  private_key     = module.keypair.private_key
-  user_data_path = "../scripts/userdata_worker.sh"
+  key_name           = module.keypair.key_name
+  security_group_ids = [module.sg.aws_sg_id]
+  private_key        = module.keypair.private_key
+  user_data_path     = "../scripts/userdata_worker.sh"
 }
 
 module "production_eip" {
-  depends_on = [ module.production_ec2 ]
-  source = "../modules/eip"
+  depends_on = [module.production_ec2]
+  source     = "../modules/eip"
   eip_tags = {
     Name = "production_eip"
   }
 }
 
 resource "aws_eip_association" "production_eip_assoc" {
-  instance_id = module.production_ec2.ec2_instance_id
+  instance_id   = module.production_ec2.ec2_instance_id
   allocation_id = module.production_eip.eip_id
 }
 
@@ -213,7 +223,7 @@ resource "aws_volume_attachment" "production_ebs_att" {
 
 
 resource "null_resource" "output_datas" {
-  depends_on = [ 
+  depends_on = [
     module.jenkins_eip, module.production_eip, module.staging_eip
   ]
   provisioner "local-exec" {

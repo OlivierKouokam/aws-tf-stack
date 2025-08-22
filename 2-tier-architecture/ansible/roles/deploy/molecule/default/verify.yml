@@ -1,0 +1,35 @@
+---
+- name: Verify deployment
+  hosts: staging
+  gather_facts: false
+  become: true
+  vars:
+    api_container: "recipe_api"
+    db_container: "recipe_db"
+    frontend_container: "recipe_frontend"
+    compose_project_dir: "{{ lookup('env','HOME') }}/deploy/"
+  tasks:
+    - name: Check docker-compose file exists
+      ansible.builtin.stat:
+        path: "{{ compose_project_dir }}/docker-compose.yml"
+      register: compose_file
+
+    - name: Assert docker-compose file is present
+      ansible.builtin.assert:
+        that:
+          - compose_file.stat.exists
+
+    - name: Check if containers are running
+      community.docker.docker_container_info:
+        name: "{{ item }}"
+      loop:
+        - "{{ api_container }}"
+        - "{{ db_container }}"
+        - "{{ frontend_container }}"
+      register: containers_info
+
+    - name: Assert containers are running
+      ansible.builtin.assert:
+        that:
+          - item.container.State.Status == 'running'
+      loop: "{{ containers_info.results }}"

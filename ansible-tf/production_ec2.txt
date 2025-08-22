@@ -1,3 +1,0 @@
-PUBLIC_IP: 34.224.248.224 - PUBLIC_DNS: ec2-34-224-248-224.compute-1.amazonaws.com  
-PUBLIC_IP: 52.206.76.85 - PUBLIC_DNS: ec2-52-206-76-85.compute-1.amazonaws.com  
-PUBLIC_IP: 54.83.6.21 - PUBLIC_DNS: ec2-54-83-6-21.compute-1.amazonaws.com  

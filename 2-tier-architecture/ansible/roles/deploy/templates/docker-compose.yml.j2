@@ -1,0 +1,65 @@
+---
+services:
+  recipe-api:
+    image: api:{{ deployment_version.api }}
+    container_name: {{ api_container }}
+    ports:
+{% for p in api_ports %}
+      - "{{ p }}"
+{% endfor %}
+    environment:
+{% for e in api_env %}
+      - {{ e }}
+{% endfor %}
+    depends_on:
+      recipe-db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - {{ network }}
+
+  recipe-db:
+    image: {{ db_image }}
+    container_name: {{ db_container }}
+    ports:
+{% for p in db_ports %}
+      - "{{ p }}"
+{% endfor %}
+    environment:
+{% for e in db_env %}
+      - {{ e }}
+{% endfor %}
+    volumes:
+      - {{ db_volume }}
+    healthcheck:
+      test: {{ db_healthcheck.test }}
+      interval: {{ db_healthcheck.interval }}
+      timeout: {{ db_healthcheck.timeout }}
+      retries: {{ db_healthcheck.retries }}
+      start_period: {{ db_healthcheck.start_period }}
+    restart: unless-stopped
+    networks:
+      - {{ network }}
+
+  recipe-frontend:
+    image: frontend:{{ deployment_version.frontend  }}
+    container_name: {{ frontend_container }}
+    ports:
+{% for p in frontend_ports %}
+      - "{{ p }}"
+{% endfor %}
+    environment:
+      - API_URL=https://{{ public_ip }}:8443/api
+    depends_on:
+      - recipe-api
+    restart: unless-stopped
+    networks:
+      - {{ network }}
+
+volumes:
+  recipe_db_data:
+    name: recipe_db_data
+networks:
+  {{ network }}:
+    driver: bridge
+    name: {{ network }}

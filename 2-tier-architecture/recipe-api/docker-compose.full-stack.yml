@@ -1,0 +1,60 @@
+services:
+  recipe-api:
+    image: api:v1.0
+    container_name: recipe_api
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    env_file:
+      - .env
+    depends_on:
+      recipe-db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - recipe-net
+
+  recipe-db:
+    image: mysql:8.0
+    container_name: recipe_db
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root_password
+      - MYSQL_DATABASE=recipe-demo
+      - MYSQL_USER=recipe_user
+      - MYSQL_PASSWORD=recipe_pass
+    volumes:
+      - recipe_db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "recipe_user", "-precipe_pass"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - recipe-net
+
+  recipe-frontend:
+    image: app:v1.0
+    container_name: recipe_frontend
+    ports:
+      - "5173:80"
+    environment:
+      - API_URL=https://your_ip:8443/api
+    depends_on:
+      - recipe-api
+
+    restart: unless-stopped
+    networks:
+      - recipe-net
+
+volumes:
+  recipe_db_data:
+    driver: local
+
+networks:
+  recipe-net:
+    driver: bridge
+    
