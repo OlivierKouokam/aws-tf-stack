@@ -24,6 +24,7 @@ module "sg" {
   name        = "${var.project_name}-sg"
   description = "SG"
   vpc_id      = module.vpc.vpc_id
+  /*
   ingress_rules = [
     { from_port = 22, to_port = 22, protocol = "tcp", cidr_blocks = var.ssh_cidr_blocks, description = "SSH" },
     { from_port = 6443, to_port = 6443, protocol = "tcp", cidr_blocks = [var.vpc_cidr], description = "K8s API" },
@@ -31,7 +32,23 @@ module "sg" {
     { from_port = 30000, to_port = 32767, protocol = "tcp", cidr_blocks = [var.vpc_cidr], description = "NodePort" },
     { from_port = 80, to_port = 80, protocol = "tcp", cidr_blocks = ["0.0.0.0/0"], description = "HTTP" },
     { from_port = 10250, to_port = 10250, protocol = "tcp", cidr_blocks = ["0.0.0.0/0"], description = "kubelet" },
+    { from_port = 443, to_port = 443, protocol = "tcp", cidr_blocks = ["0.0.0.0/0"], description = "HTTPS" }
+  ]
+  */
+  ingress_rules = [
+    { from_port = 22, to_port = 22, protocol = "tcp", cidr_blocks = var.ssh_cidr_blocks, description = "SSH" },
+    { from_port = 6443, to_port = 6443, protocol = "tcp", cidr_blocks = [var.vpc_cidr], description = "K8s API" },
+    { from_port = 30000, to_port = 32767, protocol = "tcp", cidr_blocks = [var.vpc_cidr], description = "NodePort" },
+    { from_port = 80, to_port = 80, protocol = "tcp", cidr_blocks = ["0.0.0.0/0"], description = "HTTP" },
     { from_port = 443, to_port = 443, protocol = "tcp", cidr_blocks = ["0.0.0.0/0"], description = "HTTPS" },
+    # Composants Kubernetes
+    { from_port = 10250, to_port = 10250, protocol = "tcp", cidr_blocks = [var.vpc_cidr], description = "kubelet" },
+    { from_port = 2379, to_port = 2380, protocol = "tcp", cidr_blocks = [var.vpc_cidr], description = "etcd" },
+    { from_port = 10251, to_port = 10251, protocol = "tcp", cidr_blocks = [var.vpc_cidr], description = "kube-scheduler" },
+    { from_port = 10252, to_port = 10252, protocol = "tcp", cidr_blocks = [var.vpc_cidr], description = "kube-controller-manager" },
+    # CNI (ajustez selon votre CNI)
+    { from_port = 8472, to_port = 8472, protocol = "udp", cidr_blocks = [var.vpc_cidr], description = "Flannel VXLAN" },
+    { from_port = 30000, to_port = 32767, protocol = "tcp", cidr_blocks = ["0.0.0.0/0"], description = "NodePort" },
   ]
   egress_rules = [
     { from_port = 0, to_port = 0, protocol = "-1", cidr_blocks = ["0.0.0.0/0"], description = "All outbound" }
