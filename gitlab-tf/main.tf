@@ -75,10 +75,13 @@ resource "aws_route_table_association" "public_subnet_to_docker_igw" {
 }
 
 module "sg" {
-  source  = "../modules/sg"
-  sg_name = "gitalb-sg"
-  vpc_id         = module.gitlab_vpc.stack_vpc_id
-  vpc_cidr_block = ["0.0.0.0/0"]
+  source         = "../modules/sg"
+  sg_name        = "gitlab-sg"
+  sg_vpc_id         = module.gitlab_vpc.stack_vpc_id
+  sg_cidr_block = var.gitlab_cidr_blocks
+  sg_ingress_rules = [
+    { protocol = -1, cidr_blocks = var.gitlab_cidr_blocks, description = "allow all traffic" }
+  ]
 }
 
 module "keypair" {

@@ -66,8 +66,11 @@ resource "aws_route_table_association" "public_subnet_to_ansible_igw" {
 module "sg" {
   source         = "../modules/sg"
   sg_name        = "ansible-sg"
-  vpc_id         = module.vpc.stack_vpc_id
-  vpc_cidr_block = ["0.0.0.0/0"]
+  sg_vpc_id         = module.vpc.stack_vpc_id
+  sg_cidr_block = var.ansible_cidr_blocks
+  sg_ingress_rules = [
+    { protocol = -1, cidr_blocks = var.ansible_cidr_blocks, description = "allow all traffic" }
+  ]
 }
 
 module "keypair" {

@@ -66,8 +66,11 @@ resource "aws_route_table_association" "public_subnet_to_docker_igw" {
 module "sg" {
   source         = "../modules/sg"
   sg_name        = "docker-sg"
-  vpc_id         = module.docker_vpc.stack_vpc_id
-  vpc_cidr_block = ["0.0.0.0/0"]
+  sg_vpc_id         = module.docker_vpc.stack_vpc_id
+  sg_cidr_block = var.docker_cidr_blocks
+  sg_ingress_rules = [
+    { protocol = -1, cidr_blocks = var.docker_cidr_blocks, description = "allow all traffic" }
+  ]
 }
 
 module "keypair" {
@@ -133,6 +136,7 @@ module "stack_ec2" {
   source             = "../modules/ec2"
   subnet_id          = module.public_subnet.subnet_id
   instance_type      = "t3.medium"
+  ec2_root_volume_size = 50
   aws_common_tag     = { Name = "${each.key}-ec2" }
   key_name           = module.keypair.key_name
   security_group_ids = [module.sg.aws_sg_id]

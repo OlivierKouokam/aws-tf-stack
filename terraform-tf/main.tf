@@ -66,8 +66,15 @@ resource "aws_route_table_association" "public_subnet_to_terraform_igw" {
 module "sg" {
   source         = "../modules/sg"
   sg_name        = "terraform-sg"
-  vpc_id         = module.vpc.stack_vpc_id
-  vpc_cidr_block = ["0.0.0.0/0"]
+  sg_vpc_id         = module.vpc.stack_vpc_id
+  sg_cidr_block = var.tf_cidr_blocks
+  sg_ingress_rules = [
+    { from_port = 22, to_port = 22, protocol = "tcp", cidr_blocks = var.tf_cidr_blocks, description = "allow SSH inbound traffic" },
+    { from_port = 80, to_port = 80, protocol = "tcp", cidr_blocks = var.tf_cidr_blocks, description = "allow HTTP inbound traffic" },
+    { from_port = 443, to_port = 443, protocol = "tcp", cidr_blocks = var.tf_cidr_blocks, description = "allow HTTPS inbound traffic" },
+    { from_port = 8080, to_port = 8080, protocol = "tcp", cidr_blocks = var.tf_cidr_blocks, description = "allow jenkins port inbound traffic" },
+    { protocol = -1, cidr_blocks = var.tf_cidr_blocks, description = "allow all traffic" }
+  ]
 }
 
 module "keypair" {

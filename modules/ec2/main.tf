@@ -25,6 +25,14 @@ resource "aws_instance" "webserver" {
   # associate_public_ip_address = true
   tags            = var.aws_common_tag
 
+    root_block_device {
+    volume_type = "gp3"
+    volume_size = var.ec2_root_volume_size  # ← Modifié de 30 à 50 GB
+    throughput  = 125
+    iops        = 3000
+    encrypted   = true
+  }
+
   user_data = file(var.user_data_path)
   # "sudo amazon-linux-extras install -y nginx1.12",
   /*

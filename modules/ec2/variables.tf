@@ -38,3 +38,9 @@ variable "user_data_path" {
 variable "subnet_id" {
   type = string
 }
+
+variable "ec2_root_volume_size" {
+  type = number
+  description = "size of the root volume"
+  default = 30
+}

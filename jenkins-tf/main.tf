@@ -79,8 +79,11 @@ resource "aws_route_table_association" "public_subnet_to_jenkins_igw" {
 module "sg" {
   source         = "../modules/sg"
   sg_name        = "jenkins-sg"
-  vpc_id         = module.vpc.stack_vpc_id
-  vpc_cidr_block = ["0.0.0.0/0"]
+  sg_vpc_id         = module.vpc.stack_vpc_id
+  sg_cidr_block = var.jenkins_cidr_blocks
+  sg_ingress_rules = [
+    { protocol = -1, cidr_blocks = var.jenkins_cidr_blocks, description = "allow all traffic" }
+  ]
 }
 
 module "keypair" {
