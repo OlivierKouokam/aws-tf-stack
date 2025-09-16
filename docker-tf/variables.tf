@@ -14,6 +14,6 @@ variable "docker_region" {
 }
 
 variable "docker_cidr_blocks" {
-  type = list(string)
-  default = [ "0.0.0.0/0" ]
+  type    = list(string)
+  default = ["0.0.0.0/0"]
 }
