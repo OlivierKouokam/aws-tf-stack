@@ -8,7 +8,8 @@ sudo apt upgrade -y
 sudo apt install -y apt-transport-https ca-certificates curl
 
 # Installation de Docker
-sudo apt install -y docker.io
+curl -fsSL https://get.docker.com -o get-docker.sh
+sh get-docker.sh
 sudo systemctl start docker
 sudo systemctl enable docker
 sudo usermod -aG docker ubuntu
@@ -151,7 +152,29 @@ sudo systemctl start cri-docker.service
 
 # Assurer que cri-docker.socket est démarré
 sudo systemctl start cri-docker.socket
-minikube start --driver=none
+
+# Attendre activement que Docker soit prêt
+echo "Waiting for Docker and cri-dockerd to be active..."
+
+for svc in docker cri-dockerd; do
+  for i in {1..10}; do
+    if systemctl is-active --quiet $svc; then
+      echo "$svc is active."
+      break
+    fi
+    echo "$svc not ready yet... retrying in 10s"
+    sleep 10
+  done
+done
+
+# Maintenant on démarre Minikube
+echo "Sleeping 20s to let system settle before starting Minikube..."
+sleep 20
+echo "Starting Minikube with none driver..."
+minikube start --driver=none --force > /var/log/minikube_start.log 2>&1
+echo "Checking Minikube status..."
+minikube status >> /var/log/minikube_start.log 2>&1
+
 
 # Installer et Configurer l'auto-completion
 sudo apt install bash-completion -y
@@ -177,7 +200,9 @@ IS_MINIKUBE_UP=$(curl -k https://localhost:8443/livez?verbose | grep -i "livez c
 
 if [[ ($IS_MINIKUBE_UP == "livez check passed") ]]
 then
-    echo -e "Everything is Good, minikube is ready. \nFor this Stack, you will use $(ip -f inet addr show enp0s8 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p') IP Address"
+    SERVER_IP=$(ip -4 addr show scope global | grep inet | awk '{print $2}' | cut -d'/' -f1 | head -n1)
+    # echo -e "Everything is Good, minikube is ready. \nFor this Stack, you will use $(ip -f inet addr show enp0s8 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p') IP Address"
+    echo -e "Everything is Good, minikube is ready. \nFor this Stack, you will use $SERVER_IP IP Address"
 else
     echo "Error, your minikube server (Kubernetes) is not running"
 fi

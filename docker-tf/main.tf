@@ -129,6 +129,7 @@ module "production_ec2" {
 module "stack_ec2" {
   for_each = {
     docker     = { name = "docker-ec2", user_data = "../scripts/userdata_docker.sh" }
+    # docker     = { name = "docker-ec2", user_data = "../scripts/userdata_minikube.sh" }
     staging    = { name = "staging-ec2", user_data = "../scripts/userdata_worker.sh" }
     production = { name = "production-ec2", user_data = "../scripts/userdata_worker.sh" }
   }

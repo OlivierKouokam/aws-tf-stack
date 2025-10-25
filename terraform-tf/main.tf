@@ -64,9 +64,9 @@ resource "aws_route_table_association" "public_subnet_to_terraform_igw" {
 }
 
 module "sg" {
-  source         = "../modules/sg"
-  sg_name        = "terraform-sg"
-  sg_vpc_id         = module.vpc.stack_vpc_id
+  source        = "../modules/sg"
+  sg_name       = "terraform-sg"
+  sg_vpc_id     = module.vpc.stack_vpc_id
   sg_cidr_block = var.tf_cidr_blocks
   sg_ingress_rules = [
     # { from_port = 22, to_port = 22, protocol = "tcp", cidr_blocks = var.tf_cidr_blocks, description = "allow SSH inbound traffic" },
@@ -90,7 +90,7 @@ module "terraform_ec2" {
   ]
   source        = "../modules/ec2"
   subnet_id     = module.public_subnet.subnet_id
-  instance_type = "t3.micro"
+  instance_type = "t3.medium"
   aws_common_tag = {
     Name = "terraform-ec2"
 
@@ -129,7 +129,7 @@ resource "aws_volume_attachment" "terraform_ebs_att" {
   instance_id = module.terraform_ec2.ec2_instance_id
 }
 
-resource "null_resource" "output_metadatas" {
+resource "null_resource" "output_metadata" {
   depends_on = [
     module.terraform_eip
   ]

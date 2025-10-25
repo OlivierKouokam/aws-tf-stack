@@ -13,7 +13,7 @@ sudo usermod -aG docker ubuntu
 sudo systemctl start docker
 systemctl enable docker
 
-/usr/bin/docker run -d --name eazylabs --privileged -v /var/run/docker.sock:/var/run/docker.sock -p 1993:1993 eazytraining/eazylabs:latest
+docker run -d --name eazylabs --privileged -v /var/run/docker.sock:/var/run/docker.sock -p 1993:1993 eazytraining/eazylabs:latest
 
 sudo apt update && sudo apt install -y gnupg software-properties-common
 sudo apt install wget tee -y
