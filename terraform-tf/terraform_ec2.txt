@@ -1,1 +1,0 @@
-PUBLIC_IP: 98.85.128.78 - PUBLIC_DNS: ec2-98-85-128-78.compute-1.amazonaws.com  

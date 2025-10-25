@@ -1,9 +1,0 @@
-jenkins_ec2 - PUBLIC_IP: 100.29.36.75 - PUBLIC_DNS: ec2-100-29-36-75.compute-1.amazonaws.com 
-staging_ec2 - PUBLIC_IP: 18.204.7.155 - PUBLIC_DNS: ec2-18-204-7-155.compute-1.amazonaws.com 
-production_ec2 - PUBLIC_IP: 100.25.31.239 - PUBLIC_DNS: ec2-100-25-31-239.compute-1.amazonaws.com 
-jenkins_ec2 - PUBLIC_IP: 3.94.27.223 - PUBLIC_DNS: ec2-3-94-27-223.compute-1.amazonaws.com 
-staging_ec2 - PUBLIC_IP: 98.85.90.10 - PUBLIC_DNS: ec2-98-85-90-10.compute-1.amazonaws.com 
-production_ec2 - PUBLIC_IP: 52.207.149.87 - PUBLIC_DNS: ec2-52-207-149-87.compute-1.amazonaws.com 
-jenkins_ec2 - PUBLIC_IP: 35.168.24.68 - PUBLIC_DNS: ec2-35-168-24-68.compute-1.amazonaws.com 
-staging_ec2 - PUBLIC_IP: 98.90.207.117 - PUBLIC_DNS: ec2-98-90-207-117.compute-1.amazonaws.com 
-production_ec2 - PUBLIC_IP: 34.202.81.52 - PUBLIC_DNS: ec2-34-202-81-52.compute-1.amazonaws.com 

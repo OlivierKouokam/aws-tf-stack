@@ -13,7 +13,7 @@ git clone https://github.com/OlivierKouokam/cursus-devops-stack.git
 
 cd cursus-devops-stack/jenkins
 # cd ../jenkins
-# /usr/local/bin/docker-compose up -d
+docker compose up -d
 docker compose -f docker-compose-official.yml up -d
 
 sleep 180
